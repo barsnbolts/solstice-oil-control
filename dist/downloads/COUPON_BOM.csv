@@ -1,0 +1,6 @@
+part,quantity,material_or_sku,thickness_mm,cut_file,notes
+side_wall,1,SST-048,1.2192,DXF/side_wall_cut.dxf,Existing V3 profile; bench coupon only
+door_leaf,1,SST-030,0.762,DXF/door_leaf_cut.dxf,Existing V3 profile; bench coupon only
+fixed_cheek,2,SST-048,1.2192,DXF/fixed_cheek_cut.dxf,Existing V3 profile; bench coupon only
+moving_cheek,2,SST-048,1.2192,DXF/moving_cheek_cut.dxf,Existing V3 profile; bench coupon only
+captive_pin,1,Traceable 3.175 mm stainless rod,,,Raw length and heading allowance unresolved; measure finished free span

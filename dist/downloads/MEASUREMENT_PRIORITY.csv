@@ -1,0 +1,30 @@
+rank,worksheet_item,decision,status
+1,Installed pan cover and pickup identity,Establish exact interfaces and an admissible cage/mount envelope,NOT PERFORMED
+1,Model to installed car orientation,Establish exact interfaces and an admissible cage/mount envelope,NOT PERFORMED
+1,Common mounting datum,Establish exact interfaces and an admissible cage/mount envelope,NOT PERFORMED
+1,Five boss coordinates and seating heights,Establish exact interfaces and an admissible cage/mount envelope,NOT PERFORMED
+1,Boss thread and usable depth,Establish exact interfaces and an admissible cage/mount envelope,NOT PERFORMED
+1,Original cover and bolt stack,Establish exact interfaces and an admissible cage/mount envelope,NOT PERFORMED
+1,Floor profile and cavity walls,Establish exact interfaces and an admissible cage/mount envelope,NOT PERFORMED
+1,Cover underside and relief,Establish exact interfaces and an admissible cage/mount envelope,NOT PERFORMED
+1,Pickup screen and tube keepout,Establish exact interfaces and an admissible cage/mount envelope,NOT PERFORMED
+1,Rotating assembly and dipstick keepout,Establish exact interfaces and an admissible cage/mount envelope,NOT PERFORMED
+3,Installation removal and tool access,Resolve complete mock-up fit and oil paths,NOT PERFORMED
+2,Intended use and engine operating envelope,Define common operating and oil conditions,NOT PERFORMED
+2,Vehicle acceleration and attitude cases,Define common operating and oil conditions,NOT PERFORMED
+2,Permitted oil grade fill and dipstick calibration,Define common operating and oil conditions,NOT PERFORMED
+2,Oil temperature and viscosity conditions,Define common operating and oil conditions,NOT PERFORMED
+2,Running oil inventory and return paths,Define common operating and oil conditions,NOT PERFORMED
+3,Under-wall cover and tube-relief bypass,Resolve complete mock-up fit and oil paths,NOT PERFORMED
+6,Vents trapped air and drainage,Compare refill retention venting and drainage,NOT PERFORMED
+5,Door initiation and closing recovery,Qualify representative custom hinge fabrication and operation,NOT PERFORMED
+4,Actual purchased door dimensions and revision,Qualify actual purchased hardware packaging,NOT PERFORMED
+5,Stock pin filler and rivet traceability,Qualify representative custom hinge fabrication and operation,NOT PERFORMED
+5,Post-weld leaf flatness and bore alignment,Qualify representative custom hinge fabrication and operation,NOT PERFORMED
+5,Pin heads free span and axial movement,Qualify representative custom hinge fabrication and operation,NOT PERFORMED
+7,As-built seat stop and independent door sweep,Qualify the full fitted article and its durability/service checks,NOT PERFORMED
+7,As-built pan cover floor and pickup gaps,Qualify the full fitted article and its durability/service checks,NOT PERFORMED
+7,Mount load vibration and thermal basis,Qualify the full fitted article and its durability/service checks,NOT PERFORMED
+7,Durability inspection results,Qualify the full fitted article and its durability/service checks,NOT PERFORMED
+7,Final cleanliness parts count and serviceability,Qualify the full fitted article and its durability/service checks,NOT PERFORMED
+8,Instrumented baseline and modified comparison,Compare instrumented OEM baseline and modified behavior,NOT PERFORMED

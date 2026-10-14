@@ -1,0 +1,20 @@
+variant,part,quantity,material_or_sku,thickness_mm,cut_file,notes
+V1,fixed_divider,2,SST-048,1.2192,DXF/fixed_divider_cut.dxf,Laser cut; owner finish/assemble
+V1,top_frame,1,SST-048,1.2192,DXF/top_frame_cut.dxf,Laser cut; owner finish/assemble
+V1,mount_blank,5,SST-048,1.2192,DXF/mount_blank_cut.dxf,Laser cut; owner fit/weld; undrilled
+V2,purchased_side_wall,2,SST-048,1.2192,DXF/purchased_side_wall_cut.dxf,Laser cut; owner finish/assemble
+V2,purchased_rear_wall,1,SST-048,1.2192,DXF/purchased_rear_wall_cut.dxf,Laser cut; owner finish/assemble
+V2,front_wall,1,SST-048,1.2192,DXF/front_wall_cut.dxf,Laser cut; owner finish/assemble
+V2,top_frame,1,SST-048,1.2192,DXF/top_frame_cut.dxf,Laser cut; owner finish/assemble
+V2,mount_blank,5,SST-048,1.2192,DXF/mount_blank_cut.dxf,Laser cut; owner fit/weld; undrilled
+V3,side_wall,2,SST-048,1.2192,DXF/side_wall_cut.dxf,Laser cut; owner finish/assemble
+V3,rear_wall,1,SST-048,1.2192,DXF/rear_wall_cut.dxf,Laser cut; owner finish/assemble
+V3,front_wall,1,SST-048,1.2192,DXF/front_wall_cut.dxf,Laser cut; owner finish/assemble
+V3,top_frame,1,SST-048,1.2192,DXF/top_frame_cut.dxf,Laser cut; owner finish/assemble
+V3,door_leaf,3,SST-030,0.762,DXF/door_leaf_cut.dxf,Laser cut; owner finish/assemble
+V3,fixed_cheek,6,SST-048,1.2192,DXF/fixed_cheek_cut.dxf,Laser cut; owner finish/assemble
+V3,moving_cheek,6,SST-048,1.2192,DXF/moving_cheek_cut.dxf,Laser cut; owner finish/assemble
+V3,mount_blank,5,SST-048,1.2192,DXF/mount_blank_cut.dxf,Laser cut; owner fit/weld; undrilled
+V2,Improved Racing EMR-201,3,Purchased 5052-H32 door assembly,,,Not supplied by laser cutting; verify actual unit
+V2,Solid mounting rivet,6,Supplier-recommended 1/8 inch solid aluminum,,,Size grip to actual wall plus supplier flange
+V3,Captive pivot pin,3,3.175 mm stainless round stock,,,Fit span to cheek stack; form permanent heads; no cut-sheet substitution
