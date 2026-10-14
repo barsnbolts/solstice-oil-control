@@ -6,15 +6,16 @@ import json
 ROOT=Path(__file__).resolve().parents[3]
 sys.path.insert(0,str(ROOT/'src'))
 from cadgen import build123d as bd,srgb
+from design_parameters import P4_PAN_PROXY, P4_NOMINALS, STOP_ANGLE
 
-# Only overall envelope is published GM12601240 data. Interior/datum/cover/tube are assumed.
-PAN_LENGTH,PAN_WIDTH,PAN_DEPTH=474.7,316.0,117.99
-CAGE_ORIGIN=(0,112,7)
-CAGE_ROTATION=180
-PICKUP_KEEP_OUT_D=60.0  # Design test case, NOT a recovered screen diameter.
-COVER_UNDERSIDE_Z=70.0  # Illustrative placement, NOT a measured available height.
-OUTLINE=((-120,-237.35),(115,-237.35),(135,-205),(136,-90),(150,-55),
-         (158,180),(135,237.35),(-132,237.35),(-158,190),(-145,0),(-130,-70))
+# Public names retained for validation.py and display labels; values have one source.
+PAN_LENGTH, PAN_WIDTH, PAN_DEPTH = (P4_PAN_PROXY[name] for name in
+                                    ('PAN_LENGTH', 'PAN_WIDTH', 'PAN_DEPTH'))
+CAGE_ORIGIN = P4_PAN_PROXY['CAGE_ORIGIN_XYZ']
+CAGE_ROTATION = P4_PAN_PROXY['CAGE_ROTATION_DEG']
+PICKUP_KEEP_OUT_D = P4_PAN_PROXY['PICKUP_KEEP_OUT_DIAMETER']
+COVER_UNDERSIDE_Z = P4_PAN_PROXY['COVER_UNDERSIDE_Z']
+OUTLINE = P4_PAN_PROXY['PAN_OUTLINE_XY']
 
 
 def normalized(shape):
@@ -29,21 +30,30 @@ def named(shape,label,color):
 
 def pan_shell(cutaway=True):
     outer=bd.Polygon(*OUTLINE,align=None)
-    inner=bd.Polygon(*[(x*.90,y*.95) for x,y in OUTLINE],align=None)
-    shell=bd.extrude(outer,amount=PAN_DEPTH)-bd.extrude(inner,amount=PAN_DEPTH+10).translate((0,0,4))
-    shelf=inner.intersect(bd.Pos(0,-150)*bd.Rectangle(400,220))
-    shell=shell.fuse(bd.extrude(shelf,amount=70).translate((0,0,4)))
+    sx,sy=P4_PAN_PROXY['PAN_INNER_SCALE_XY']
+    inner=bd.Polygon(*[(x*sx,y*sy) for x,y in OUTLINE],align=None)
+    floor=P4_PAN_PROXY['PAN_FLOOR_Z']
+    shell=bd.extrude(outer,amount=PAN_DEPTH)-bd.extrude(
+        inner,amount=PAN_DEPTH+P4_PAN_PROXY['PAN_INNER_CUT_EXTRA']).translate((0,0,floor))
+    shelf_center=P4_PAN_PROXY['PAN_SHELF_CENTER_XY']
+    shelf_size=P4_PAN_PROXY['PAN_SHELF_SIZE_XY']
+    shelf=inner.intersect(bd.Pos(*shelf_center)*bd.Rectangle(*shelf_size))
+    shell=shell.fuse(bd.extrude(shelf,amount=P4_PAN_PROXY['PAN_SHELF_HEIGHT']).translate((0,0,floor)))
     # Three visual stiffening ribs echo the shallow extension in source photos.
-    for x in (-65,0,65):
-        shell=shell.fuse(bd.Box(6,160,8,align=(bd.Align.CENTER,bd.Align.CENTER,bd.Align.MIN)).translate((x,-136,74)))
+    rib_size=P4_PAN_PROXY['PAN_RIB_SIZE_XYZ']
+    for x in P4_PAN_PROXY['PAN_RIB_X_POSITIONS']:
+        shell=shell.fuse(bd.Box(*rib_size,align=(bd.Align.CENTER,bd.Align.CENTER,bd.Align.MIN)).translate(
+            (x,P4_PAN_PROXY['PAN_RIB_CENTER_Y'],P4_PAN_PROXY['PAN_RIB_BOTTOM_Z'])))
     if cutaway:
-        shell=shell-bd.Box(100,290,150,align=(bd.Align.MIN,bd.Align.CENTER,bd.Align.MIN)).translate((110,100,15))
+        shell=shell-bd.Box(*P4_PAN_PROXY['PAN_CUTAWAY_SIZE_XYZ'],
+            align=(bd.Align.MIN,bd.Align.CENTER,bd.Align.MIN)).translate(P4_PAN_PROXY['PAN_CUTAWAY_ORIGIN_XYZ'])
     return named(shell,'REFERENCE_pan_shell_ASSUMED_INTERIOR','#B8C2C7')
 
 
 def tube_segment(a,b):
     direction=tuple(y-x for x,y in zip(a,b));length=sqrt(sum(v*v for v in direction))
-    tube=bd.Cylinder(9,length,align=(bd.Align.CENTER,bd.Align.CENTER,bd.Align.MIN))
+    tube=bd.Cylinder(P4_PAN_PROXY['TUBE_DIAMETER']/2,length,
+                     align=(bd.Align.CENTER,bd.Align.CENTER,bd.Align.MIN))
     axis=(-direction[1],direction[0],0)
     if sqrt(sum(v*v for v in axis))>1e-10:
         tube=tube.rotate(bd.Axis((0,0,0),axis),degrees(acos(direction[2]/length)))
@@ -52,26 +62,34 @@ def tube_segment(a,b):
 
 def pickup_reference():
     # A visible design keep-out, not a replicated OEM screen or tube.
-    keepout=bd.Cylinder(PICKUP_KEEP_OUT_D/2,10).translate((0,112,18))
+    keepout=bd.Cylinder(PICKUP_KEEP_OUT_D/2,P4_PAN_PROXY['PICKUP_KEEP_OUT_HEIGHT']).translate(
+        P4_PAN_PROXY['PICKUP_CENTER_XYZ'])
     named(keepout,'REFERENCE_pickup_60mm_DESIGN_TEST_CASE','#986f96')
-    points=[(0,112,25),(0,158,44),(0,198,44),(0,220,70),(0,220,95)]
+    points=P4_PAN_PROXY['TUBE_CENTERLINE_XYZ']
     pipe=tube_segment(points[0],points[1])
-    for a,b in zip(points[1:],points[2:]):pipe=pipe.fuse(tube_segment(a,b),bd.Sphere(9).translate(a))
+    for a,b in zip(points[1:],points[2:]):
+        pipe=pipe.fuse(tube_segment(a,b),bd.Sphere(P4_PAN_PROXY['TUBE_DIAMETER']/2).translate(a))
     named(pipe,'REFERENCE_tube_route_UNKNOWN','#986f96')
     return [keepout,pipe]
 
 
 def cover_reference(lift=0):
-    points=[(-113,-80),(-98,-108),(-45,-100),(8,-94),(84,-98),(113,-55),
-            (104,-9),(119,31),(90,96),(32,111),(-36,100),(-91,102),(-114,55)]
-    profile=bd.Polygon(*points,align=None)-bd.Pos(0,88)*bd.Rectangle(42,100)
-    cover=bd.extrude(profile,amount=1.0).translate((0,112,COVER_UNDERSIDE_Z+lift))
+    points=P4_PAN_PROXY['COVER_OUTLINE_XY']
+    relief_center=P4_PAN_PROXY['COVER_RELIEF_CENTER_XY']
+    relief_size=P4_PAN_PROXY['COVER_RELIEF_SIZE_XY']
+    profile=bd.Polygon(*points,align=None)-bd.Pos(*relief_center)*bd.Rectangle(*relief_size)
+    cover=bd.extrude(profile,amount=P4_PAN_PROXY['COVER_THICKNESS']).translate(
+        (0,CAGE_ORIGIN[1],COVER_UNDERSIDE_Z+lift))
     named(cover,'REFERENCE_OEM_cover_shape_and_height_UNKNOWN','#C9BEA3')
     # Raised relief is a geometric visual cue only; no mounting holes are invented.
-    outer=bd.Cylinder(23,90,align=(bd.Align.CENTER,bd.Align.CENTER,bd.Align.MIN)).rotate(bd.Axis.X,-90)
-    inner=bd.Cylinder(22,92,align=(bd.Align.CENTER,bd.Align.CENTER,bd.Align.MIN)).rotate(bd.Axis.X,-90).translate((0,-1,0))
-    hood=normalized((outer-inner).intersect(bd.Box(80,100,30,align=(bd.Align.CENTER,bd.Align.MIN,bd.Align.MIN))))
-    hood=hood.translate((0,112+20,COVER_UNDERSIDE_Z+lift))
+    outer=bd.Cylinder(P4_PAN_PROXY['COVER_HOOD_OUTER_DIAMETER']/2,
+        P4_PAN_PROXY['COVER_HOOD_OUTER_LENGTH'],align=(bd.Align.CENTER,bd.Align.CENTER,bd.Align.MIN)).rotate(bd.Axis.X,-90)
+    inner=bd.Cylinder(P4_PAN_PROXY['COVER_HOOD_INNER_DIAMETER']/2,
+        P4_PAN_PROXY['COVER_HOOD_INNER_LENGTH'],align=(bd.Align.CENTER,bd.Align.CENTER,bd.Align.MIN)).rotate(
+            bd.Axis.X,-90).translate((0,P4_PAN_PROXY['COVER_HOOD_INNER_Y_OFFSET'],0))
+    hood=normalized((outer-inner).intersect(bd.Box(*P4_PAN_PROXY['COVER_HOOD_CLIP_SIZE_XYZ'],
+        align=(bd.Align.CENTER,bd.Align.MIN,bd.Align.MIN))))
+    hood=hood.translate((0,CAGE_ORIGIN[1]+P4_PAN_PROXY['COVER_HOOD_CENTER_Y_OFFSET'],COVER_UNDERSIDE_Z+lift))
     named(hood,'REFERENCE_raised_pickup_relief_UNKNOWN','#C9BEA3')
     return [cover,hood]
 
@@ -91,15 +109,20 @@ def insert(kind,angle=0):
 def scene(kind,stage='cutaway'):
     pan=pan_shell(cutaway=stage!='whole')
     if stage=='detail':
-        pan=normalized(pan.intersect(bd.Box(400,260,150).translate((0,115,65))))
+        pan=normalized(pan.intersect(bd.Box(*P4_PAN_PROXY['DETAIL_CROP_SIZE_XYZ']).translate(
+            P4_PAN_PROXY['DETAIL_CROP_CENTER_XYZ'])))
         named(pan,'REFERENCE_deep_sump_cutaway_ASSUMED_INTERIOR','#B8C2C7')
     children=[pan,*pickup_reference()]
     body=insert(kind)
-    if stage=='exploded':body=body.translate((0,0,90))
+    if stage=='exploded':body=body.translate((0,0,P4_PAN_PROXY['INSERT_EXPLODED_Z']))
     children.append(body)
-    if stage in ('exploded','whole'):children+=cover_reference(190 if stage=='exploded' else 0)
+    if stage in ('exploded','whole'):
+        lift=P4_PAN_PROXY['COVER_EXPLODED_LIFT'] if stage=='exploded' else 0
+        children+=cover_reference(lift)
     if stage=='section':
-        tool=bd.Box(500,600,500,align=(bd.Align.MIN,bd.Align.CENTER,bd.Align.MIN)).translate((0,0,-10))
+        tool=bd.Box(*P4_PAN_PROXY['SECTION_TOOL_SIZE_XYZ'],
+                    align=(bd.Align.MIN,bd.Align.CENTER,bd.Align.MIN)).translate(
+                        P4_PAN_PROXY['SECTION_TOOL_ORIGIN_XYZ'])
         sections=[]
         for child in children:
             clipped=normalized(child.cut(tool))
@@ -129,11 +152,14 @@ def scene_gate_specs(kind):
 def scene_animation(kind):
     targets=[{'labels':s['moving_labels'],'axis':s['axis'],'pivot':s['pivot'],'phase':i/len(scene_gate_specs(kind))}
              for i,s in enumerate(scene_gate_specs(kind))]
-    return ('const gates='+json.dumps(targets)+';export const clips={demo:{label:"Illustrative pan context; arbitrary independent gate travel",duration:6,loop:true,update(t,m){for(const g of gates){const a=30*(1-Math.cos(2*Math.PI*(t/6+g.phase)));for(const label of g.labels)m.get(label).rotate(g.axis,a,g.pivot);}}}};')
+    duration=P4_NOMINALS['DEMO_DURATION_S']
+    return (f'const gates={json.dumps(targets)};export const clips={{demo:{{label:"Illustrative pan context; arbitrary independent gate travel",'
+            f'duration:{duration:g},loop:true,update(t,m){{for(const g of gates){{const a={STOP_ANGLE/2:g}*(1-Math.cos(2*Math.PI*(t/{duration:g}+g.phase)));'
+            'for(const label of g.labels)m.get(label).rotate(g.axis,a,g.pivot);}}}};')
 
 
 def scene_kinematics(kind):
     from cadgen import revolute
     specs=scene_gate_specs(kind)
-    return {'mates':[revolute(s['name'],parent='#'+s['wall_label'],child='#'+s['door_label'],origin=s['pivot'],direction=s['axis'],limits=(0,60)) for s in specs],
-            'poses':{'closed':{s['name']:0 for s in specs},'open':{s['name']:60 for s in specs}}}
+    return {'mates':[revolute(s['name'],parent='#'+s['wall_label'],child='#'+s['door_label'],origin=s['pivot'],direction=s['axis'],limits=(0,STOP_ANGLE)) for s in specs],
+            'poses':{'closed':{s['name']:0 for s in specs},'open':{s['name']:STOP_ANGLE for s in specs}}}

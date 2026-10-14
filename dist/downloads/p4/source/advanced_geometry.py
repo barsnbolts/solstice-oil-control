@@ -13,15 +13,18 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT/'src'))
 from cadgen import build123d as bd, revolute, srgb
 from parts import gate_components, place, wall_place, flat_part
-from design_parameters import T, LEAF_T, HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_Z, PIVOT_IN, PIVOT_Z, STOP_ANGLE
+from design_parameters import (T, LEAF_T, HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_Z,
+                               PIVOT_IN, PIVOT_Z, STOP_ANGLE, P4_NOMINALS)
 
-RADIAL_WIDTH, RADIAL_LENGTH, CHAMFER = 164.0, 154.0, 42.0
-OUTER_WIDTH, OUTER_LENGTH = 224.0, 208.0
-INNER_WIDTH, INNER_LENGTH = 136.0, 120.0
-RIM = 10.0
-TUBE_WIDTH, TUBE_BOTTOM = 42.0, 22.0
-GUIDE_LENGTH, GUIDE_ROOT_HEIGHT, GUIDE_TIP_HEIGHT = 24.0, 34.0, 18.0
-BRIDGE_WIDTH = 12.0
+RADIAL_WIDTH, RADIAL_LENGTH, CHAMFER = (P4_NOMINALS[name] for name in
+                                        ('RADIAL_WIDTH', 'RADIAL_LENGTH', 'CHAMFER'))
+OUTER_WIDTH, OUTER_LENGTH = (P4_NOMINALS[name] for name in ('OUTER_WIDTH', 'OUTER_LENGTH'))
+INNER_WIDTH, INNER_LENGTH = (P4_NOMINALS[name] for name in ('INNER_WIDTH', 'INNER_LENGTH'))
+RIM = P4_NOMINALS['RIM']
+TUBE_WIDTH, TUBE_BOTTOM = (P4_NOMINALS[name] for name in ('TUBE_WIDTH', 'TUBE_BOTTOM'))
+GUIDE_LENGTH, GUIDE_ROOT_HEIGHT, GUIDE_TIP_HEIGHT = (P4_NOMINALS[name] for name in
+                                                       ('GUIDE_LENGTH', 'GUIDE_ROOT_HEIGHT', 'GUIDE_TIP_HEIGHT'))
+BRIDGE_WIDTH = P4_NOMINALS['BRIDGE_WIDTH']
 
 
 def _octagon(width, length):
@@ -60,14 +63,15 @@ def gate_specs(kind):
     raw = []
     if kind == 'radial':
         x, y = RADIAL_WIDTH/2-T-CHAMFER/2, RADIAL_LENGTH/2-T-CHAMFER/2
-        raw = [(name,theta,xyz) for name,theta,xyz in (
-            ('rad_fr',45,(x,-y,0)),('rad_rr',135,(x,y,0)),
-            ('rad_rl',225,(-x,y,0)),('rad_fl',315,(-x,-y,0)))]
+        placements = ((x,-y,0),(x,y,0),(-x,y,0),(-x,-y,0))
+        raw = [(name, theta, xyz) for name, theta, xyz in zip(
+            ('rad_fr','rad_rr','rad_rl','rad_fl'),
+            P4_NOMINALS['RADIAL_GATE_ANGLES_DEG'], placements)]
     elif kind == 'nested':
         # Stagger the two rows of gates; their windows and hardware move together.
         for tier,width,length,offsets in (
-                ('outer',OUTER_WIDTH,OUTER_LENGTH,(-25,25,25)),
-                ('inner',INNER_WIDTH,INNER_LENGTH,(15,-10,-10))):
+                ('outer',OUTER_WIDTH,OUTER_LENGTH,P4_NOMINALS['NESTED_OUTER_GATE_OFFSETS']),
+                ('inner',INNER_WIDTH,INNER_LENGTH,P4_NOMINALS['NESTED_INNER_GATE_OFFSETS'])):
             for side,theta,centre,offset in (
                     ('rear',180,(0,length/2-T,0),offsets[0]),
                     ('left',-90,(-width/2+T,0,0),offsets[1]),
@@ -108,8 +112,8 @@ def cut_profiles(kind):
                                          (0,GUIDE_ROOT_HEIGHT),align=None),5)
     elif kind == 'nested':
         for tier,width,length,offsets,color in (
-                ('outer',OUTER_WIDTH,OUTER_LENGTH,(-25,25,25),'#627D8B'),
-                ('inner',INNER_WIDTH,INNER_LENGTH,(15,-10,-10),'#579F9C')):
+                ('outer',OUTER_WIDTH,OUTER_LENGTH,P4_NOMINALS['NESTED_OUTER_GATE_OFFSETS'],'#627D8B'),
+                ('inner',INNER_WIDTH,INNER_LENGTH,P4_NOMINALS['NESTED_INNER_GATE_OFFSETS'],'#579F9C')):
             add(tier+'_rear_gated_wall',_wall_profile(width-2*T,offsets[0]),color=color)
             # Left and right have the same local offset, even though their world Y differs.
             add(tier+'_side_gated_wall',_wall_profile(length,offsets[1]),2,color)
@@ -177,21 +181,23 @@ def concept(kind, angle=0):
         plate('radial_cardinal_side_wall','radial_left_wall',-90,(-RADIAL_WIDTH/2+T,0,0),True)
         plate('radial_cardinal_side_wall','radial_right_wall',90,(RADIAL_WIDTH/2-T,0,0),True)
         plate('radial_open_rim','radial_open_rim',xyz=(0,0,HEIGHT))
+        front = P4_NOMINALS['RADIAL_FRONT_GUIDE_OFFSET']
         for name,theta,xyz in [('rear',90,(0,RADIAL_LENGTH/2,0)),
                                ('left',180,(-RADIAL_WIDTH/2,0,0)),('right',0,(RADIAL_WIDTH/2,0,0)),
-                               ('front_left',-90,(-32,-RADIAL_LENGTH/2,0)),
-                               ('front_right',-90,(32,-RADIAL_LENGTH/2,0))]:
+                               ('front_left',-90,(-front,-RADIAL_LENGTH/2,0)),
+                               ('front_right',-90,(front,-RADIAL_LENGTH/2,0))]:
             plate('radial_guide_vane','guide_'+name,theta,xyz,True)
     else:
         for tier,length in [('outer',OUTER_LENGTH),('inner',INNER_LENGTH)]:
             width = OUTER_WIDTH if tier == 'outer' else INNER_WIDTH
             plate(tier+'_front_relief_wall',tier+'_front_relief_wall',0,(0,-length/2+T,0),True)
             plate(tier+'_open_rim',tier+'_open_rim',xyz=(0,0,HEIGHT))
+        front = P4_NOMINALS['NESTED_FRONT_BRIDGE_OFFSET']
         for name,theta,xy in [('left',0,(-(INNER_WIDTH/2+OUTER_WIDTH/2-RIM)/2,0)),
                               ('right',0,((INNER_WIDTH/2+OUTER_WIDTH/2-RIM)/2,0)),
                               ('rear',90,(0,(INNER_LENGTH/2+OUTER_LENGTH/2-RIM)/2)),
-                              ('front_left',90,(-45,-(INNER_LENGTH/2+OUTER_LENGTH/2-RIM)/2)),
-                              ('front_right',90,(45,-(INNER_LENGTH/2+OUTER_LENGTH/2-RIM)/2))]:
+                               ('front_left',90,(-front,-(INNER_LENGTH/2+OUTER_LENGTH/2-RIM)/2)),
+                               ('front_right',90,(front,-(INNER_LENGTH/2+OUTER_LENGTH/2-RIM)/2))]:
             plate('nested_rim_bridge','bridge_'+name,theta,(*xy,HEIGHT))
     return bd.Compound(children=children,label=kind.upper()+'_DESIGN_ASSUMED_NO_OEM_FIT')
 
@@ -205,10 +211,11 @@ def kinematics(kind):
 
 def animation(kind):
     specs = gate_specs(kind)
+    duration = P4_NOMINALS['DEMO_DURATION_S']
     targets = [{'labels':s['moving_labels'],'axis':s['axis'],'pivot':s['pivot'],
                 'phase':index/len(specs)} for index,s in enumerate(specs)]
     return ('const gates='+json.dumps(targets)+';\nexport const clips={demo:{label:'+
             json.dumps(kind+' collector — arbitrary phased kinematics; no oil forces')+
-            ',duration:6,loop:true,update(t,m){for(const g of gates){'+
-            'const a='+str(STOP_ANGLE/2)+'*(1-Math.cos(2*Math.PI*(t/6+g.phase)));'+
+            f',duration:{duration:g},loop:true,update(t,m){{for(const g of gates){{'+
+            f'const a={STOP_ANGLE/2:g}*(1-Math.cos(2*Math.PI*(t/{duration:g}+g.phase)));'+
             'for(const label of g.labels)m.get(label).rotate(g.axis,a,g.pivot);}}}};')

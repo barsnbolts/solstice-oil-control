@@ -3,7 +3,11 @@
 Edit the explicit constants to tune a concept, then rebuild and inspect it.
 The custom hinge contour is calibrated to one configuration, not a resize engine.
 validate_dimensions accepts isolated proposed values without changing the model.
+
+P4_NOMINALS and P4_PAN_PROXY are the shared dimension source for the current
+alternatives and their illustrative pan scene. Proxy inputs remain unmeasured.
 """
+import json
 from math import isfinite, sqrt
 
 T = 1.2192  # SendCutSend SST-048 nominal stock
@@ -34,6 +38,61 @@ PURCHASED_HOLE_SPACING, PURCHASED_HOLE_D, PURCHASED_HOLE_Z = 19.05, 3.2512, 40.6
 PROXY_DOOR_WIDTH, PROXY_T, PROXY_LEAF_HEIGHT = 44.45, 0.8, 23.0
 PROXY_MOUNT_HEIGHT, PROXY_MOUNT_HOLE_OFFSET_Z = 13.0, 3.0
 PROXY_HINGE_R, PROXY_HINGE_Z, PROXY_HOLE_TOOL_DEPTH = 1.5, 28.5, 4.0
+
+# P4 concepts B and C. Values feed geometry, generated registers and the site.
+P4_NOMINALS = {
+    'RADIAL_WIDTH': 164.0, 'RADIAL_LENGTH': 154.0, 'CHAMFER': 42.0,
+    'OUTER_WIDTH': 224.0, 'OUTER_LENGTH': 208.0,
+    'INNER_WIDTH': 136.0, 'INNER_LENGTH': 120.0, 'RIM': 10.0,
+    'TUBE_WIDTH': 42.0, 'TUBE_BOTTOM': 22.0,
+    'GUIDE_LENGTH': 24.0, 'GUIDE_ROOT_HEIGHT': 34.0, 'GUIDE_TIP_HEIGHT': 18.0,
+    'BRIDGE_WIDTH': 12.0,
+    'RADIAL_GATE_ANGLES_DEG': (45, 135, 225, 315),
+    'NESTED_OUTER_GATE_OFFSETS': (-25, 25, 25),
+    'NESTED_INNER_GATE_OFFSETS': (15, -10, -10),
+    'RADIAL_FRONT_GUIDE_OFFSET': 32.0,
+    'NESTED_FRONT_BRIDGE_OFFSET': 45.0,
+    'DEMO_DURATION_S': 6.0,
+}
+
+# Illustrative pan, cover, pickup and tube geometry. Only the three overall pan
+# maxima are sourced; every interior/profile/placement value is a proxy input.
+P4_PAN_PROXY = {
+    'PAN_LENGTH': 474.7, 'PAN_WIDTH': 316.0, 'PAN_DEPTH': 117.99,
+    'CAGE_ORIGIN_XYZ': (0, 112, 7), 'CAGE_ROTATION_DEG': 180,
+    'PICKUP_KEEP_OUT_DIAMETER': 60.0, 'PICKUP_KEEP_OUT_HEIGHT': 10.0,
+    'PICKUP_CENTER_XYZ': (0, 112, 18),
+    'TUBE_DIAMETER': 18.0,
+    'TUBE_CENTERLINE_XYZ': ((0, 112, 25), (0, 158, 44), (0, 198, 44),
+                            (0, 220, 70), (0, 220, 95)),
+    'COVER_UNDERSIDE_Z': 70.0,
+    'PAN_OUTLINE_XY': ((-120, -237.35), (115, -237.35), (135, -205), (136, -90),
+                       (150, -55), (158, 180), (135, 237.35), (-132, 237.35),
+                       (-158, 190), (-145, 0), (-130, -70)),
+    'PAN_INNER_SCALE_XY': (0.90, 0.95), 'PAN_FLOOR_Z': 4.0,
+    'PAN_INNER_CUT_EXTRA': 10.0,
+    'PAN_SHELF_CENTER_XY': (0, -150), 'PAN_SHELF_SIZE_XY': (400, 220),
+    'PAN_SHELF_HEIGHT': 70.0,
+    'PAN_RIB_X_POSITIONS': (-65, 0, 65), 'PAN_RIB_SIZE_XYZ': (6, 160, 8),
+    'PAN_RIB_CENTER_Y': -136.0, 'PAN_RIB_BOTTOM_Z': 74.0,
+    'PAN_CUTAWAY_SIZE_XYZ': (100, 290, 150),
+    'PAN_CUTAWAY_ORIGIN_XYZ': (110, 100, 15),
+    'DETAIL_CROP_SIZE_XYZ': (400, 260, 150),
+    'DETAIL_CROP_CENTER_XYZ': (0, 115, 65),
+    'INSERT_EXPLODED_Z': 90.0, 'COVER_EXPLODED_LIFT': 190.0,
+    'SECTION_TOOL_SIZE_XYZ': (500, 600, 500),
+    'SECTION_TOOL_ORIGIN_XYZ': (0, 0, -10),
+    'COVER_OUTLINE_XY': ((-113, -80), (-98, -108), (-45, -100), (8, -94),
+                         (84, -98), (113, -55), (104, -9), (119, 31), (90, 96),
+                         (32, 111), (-36, 100), (-91, 102), (-114, 55)),
+    'COVER_RELIEF_CENTER_XY': (0, 88), 'COVER_RELIEF_SIZE_XY': (42, 100),
+    'COVER_THICKNESS': 1.0,
+    'COVER_HOOD_OUTER_DIAMETER': 46.0, 'COVER_HOOD_OUTER_LENGTH': 90.0,
+    'COVER_HOOD_INNER_DIAMETER': 44.0, 'COVER_HOOD_INNER_LENGTH': 92.0,
+    'COVER_HOOD_INNER_Y_OFFSET': -1.0,
+    'COVER_HOOD_CLIP_SIZE_XYZ': (80, 100, 30),
+    'COVER_HOOD_CENTER_Y_OFFSET': 20.0,
+}
 
 # These values couple the profiled stop, bore, attachment and gravity balance.
 # Changes require renewed contour/motion checks rather than silent extrapolation.
@@ -160,8 +219,28 @@ V1_DIVIDER_OFFSET = _CHECKED['V1_DIVIDER_OFFSET']
 REGISTER_FIELDS = ('parameter', 'value', 'unit', 'datum', 'source', 'uncertainty', 'status')
 
 
+def _register_value(value):
+    if isinstance(value, (tuple, list)):
+        return json.dumps(value, separators=(',', ':'))
+    return str(value)
+
+
+def _register_unit(name):
+    if name.endswith('_DEG') or name.endswith('_ANGLES_DEG'):
+        return 'deg'
+    if name.endswith('_S'):
+        return 's'
+    if 'SCALE' in name:
+        return 'ratio X/Y'
+    if 'OUTLINE' in name or 'CENTERLINE' in name:
+        return 'mm XY/XYZ coordinates'
+    if isinstance(P4_NOMINALS.get(name), tuple) or isinstance(P4_PAN_PROXY.get(name), tuple):
+        return 'mm coordinate/size array'
+    return 'mm'
+
+
 def parameter_register_rows():
-    """Deterministic rows for DIMENSION_REGISTER.csv; unknown interfaces stay blank."""
+    """Rows for the shared nominal source; unknown installed interfaces stay blank."""
     p = validate_dimensions()
     rows = []
     for name, value in p.items():
@@ -195,6 +274,36 @@ def parameter_register_rows():
             status = 'DERIVED_FROM_DESIGN_ASSUMPTIONS'
         rows.append(dict(zip(REGISTER_FIELDS, (name, str(value), 'deg' if name == 'STOP_ANGLE' else 'mm',
                                                datum, source, uncertainty, status))))
+    for group, values in (('P4', P4_NOMINALS), ('PAN_PROXY', P4_PAN_PROXY)):
+        for name, value in values.items():
+            key = f'{group}_{name}'
+            unit = _register_unit(name)
+            datum = ('P4 nominal cage dimensions and named local features; no measured vehicle transform'
+                     if group == 'P4' else
+                     'Pan-proxy XYZ frame; cage is transformed by CAGE_ORIGIN_XYZ and CAGE_ROTATION_DEG')
+            source_name = 'P4_NOMINALS' if group == 'P4' else 'P4_PAN_PROXY'
+            source = f'src/design_parameters.py:{source_name}[{name}]'
+            uncertainty = 'Nominal digital input; no measured installed correspondence or manufacturing tolerance'
+            status = 'DESIGN_ASSUMPTION_UNVERIFIED_FIT'
+            if group == 'PAN_PROXY':
+                status = 'DISPLAY_PROXY_ASSUMPTION'
+                uncertainty = 'Illustrative context only; not recovered OEM interior, cover, pickup or tube geometry'
+                if name in ('PAN_LENGTH', 'PAN_WIDTH', 'PAN_DEPTH'):
+                    source = 'Official GM12601240 product specification; overall maximum envelope only (concepts/p4/PAN_CONTEXT.md)'
+                    uncertainty = 'Published overall maximum; internal sections and datum correspondence remain unknown'
+                    status = 'SOURCE_BACKED_OVERALL_ENVELOPE_INTERIOR_UNKNOWN'
+            elif name == 'DEMO_DURATION_S':
+                uncertainty = 'Arbitrary presentation timing; it does not represent physical opening time'
+                status = 'DISPLAY_ONLY_ANIMATION_SETTING'
+            rows.append(dict(zip(REGISTER_FIELDS, (key, _register_value(value), unit, datum,
+                                                   source, uncertainty, status))))
+    lower_gap = P4_PAN_PROXY['CAGE_ORIGIN_XYZ'][2] - P4_PAN_PROXY['PAN_FLOOR_Z']
+    rows.append(dict(zip(REGISTER_FIELDS, (
+        'PAN_PROXY_DERIVED_LOWER_WALL_TO_FLOOR_GAP', _register_value(lower_gap), 'mm',
+        'Pan-proxy Z frame; insert lower wall relative to assumed floor',
+        'P4_PAN_PROXY[CAGE_ORIGIN_XYZ][2] - P4_PAN_PROXY[PAN_FLOOR_Z]',
+        'Nominal display gap only; not a flow, retention or operating-clearance limit',
+        'DERIVED_FROM_DISPLAY_PROXY_ASSUMPTIONS'))))
     for name in ('ACTUAL_PAN_FLOOR_PROFILE', 'ACTUAL_PICKUP_KEEP_OUT', 'ACTUAL_COVER_UNDERSIDE',
                  'ACTUAL_BOSS_COORDINATES_AND_SEATS', 'ACTUAL_THREADS_AND_ENGAGEMENT',
                  'ACTUAL_INSTALLED_ATTITUDE', 'ACTUAL_OIL_LEVEL_AND_RETURN_PATHS'):

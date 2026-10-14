@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "candidate_sha256": "3deed445a9ac8d874ba4f479ccb44f2491eb883a405a0556a977479e8ca7645b",
+  "default_selection": {
+    "concept": "nested",
+    "view": "detail"
+  },
+  "concepts": {
+    "baseline": {
+      "letter": "A",
+      "title": "Simple gated well",
+      "well_mm": [
+        160.0,
+        120.0
+      ],
+      "envelope_mm": [
+        160.0,
+        120.0,
+        47.2192
+      ],
+      "gates": 3,
+      "cut_plates": 25,
+      "pins": 3,
+      "overview": "assets/p4/baseline_pan_cutaway.png",
+      "views": {
+        "detail": {
+          "model": "assets/p4/baseline_pan_detail.glb",
+          "poster": "assets/p4/baseline_pan_detail.png",
+          "step": "downloads/p4/baseline_pan_detail.step"
+        },
+        "exploded": {
+          "model": "assets/p4/baseline_pan_exploded.glb",
+          "poster": "assets/p4/baseline_pan_exploded.png",
+          "step": "downloads/p4/baseline_pan_exploded.step"
+        },
+        "section": {
+          "model": "assets/p4/baseline_pan_section.glb",
+          "poster": "assets/p4/baseline_pan_section.png",
+          "step": "downloads/p4/baseline_pan_section.step"
+        }
+      }
+    },
+    "radial": {
+      "letter": "B",
+      "title": "Radial collector",
+      "well_mm": [
+        164.0,
+        154.0
+      ],
+      "envelope_mm": [
+        212.0,
+        202.0,
+        47.2192
+      ],
+      "gates": 4,
+      "cut_plates": 34,
+      "pins": 4,
+      "overview": "assets/p4/radial_pan_cutaway.png",
+      "views": {
+        "detail": {
+          "model": "assets/p4/radial_pan_detail.glb",
+          "poster": "assets/p4/radial_pan_detail.png",
+          "step": "downloads/p4/radial_pan_detail.step"
+        },
+        "exploded": {
+          "model": "assets/p4/radial_pan_exploded.glb",
+          "poster": "assets/p4/radial_pan_exploded.png",
+          "step": "downloads/p4/radial_pan_exploded.step"
+        },
+        "section": {
+          "model": "assets/p4/radial_pan_section.glb",
+          "poster": "assets/p4/radial_pan_section.png",
+          "step": "downloads/p4/radial_pan_section.step"
+        }
+      }
+    },
+    "nested": {
+      "letter": "C",
+      "title": "Nested reservoir",
+      "well_mm": [
+        136.0,
+        120.0
+      ],
+      "envelope_mm": [
+        224.00000000000003,
+        208.0,
+        47.2192
+      ],
+      "gates": 6,
+      "cut_plates": 45,
+      "pins": 6,
+      "overview": "assets/p4/nested_pan_cutaway.png",
+      "views": {
+        "detail": {
+          "model": "assets/p4/nested_pan_detail.glb",
+          "poster": "assets/p4/nested_pan_detail.png",
+          "step": "downloads/p4/nested_pan_detail.step"
+        },
+        "exploded": {
+          "model": "assets/p4/nested_pan_exploded.glb",
+          "poster": "assets/p4/nested_pan_exploded.png",
+          "step": "downloads/p4/nested_pan_exploded.step"
+        },
+        "section": {
+          "model": "assets/p4/nested_pan_section.glb",
+          "poster": "assets/p4/nested_pan_section.png",
+          "step": "downloads/p4/nested_pan_section.step"
+        }
+      }
+    }
+  }
+}

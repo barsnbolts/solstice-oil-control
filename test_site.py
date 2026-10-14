@@ -1,10 +1,12 @@
 """Check public packet paths and reject broken/local website links."""
 from pathlib import Path
 import csv,io,tempfile,zipfile
-from build import SITE,validate
+from build import SITE
+from check_dist import validate_dist
 
 dist=SITE/'dist'
-validate(dist)
+result=validate_dist(dist)
+assert result['status']=='passed' and result['concepts']==3 and result['views']==9
 with zipfile.ZipFile(dist/'downloads/Solstice_prototype_files.zip') as z:
     assert z.testzip() is None
     for name in ('delivery/BOM.csv','delivery/COUPON_BOM.csv','concepts/p4/BOM.csv'):
@@ -20,7 +22,7 @@ with tempfile.TemporaryDirectory() as directory:
     root=Path(directory);page=root/'index.html'
     for fixture in ('<a href="missing.pdf">missing</a>','<p>/Users/private/file</p>','<a href="../outside.html">escape</a>'):
         page.write_text(fixture)
-        try:validate(root)
+        try:validate_dist(root)
         except ValueError:pass
         else:raise AssertionError('Unsafe or broken fixture accepted')
 print('Public links, no-local-path guard, archive CRC, source/sidecars and both BOM path sets passed.')

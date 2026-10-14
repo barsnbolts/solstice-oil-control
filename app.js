@@ -30,13 +30,24 @@ const gatePlay=document.querySelector('#gate-play');
 function changePanView(){
   if(typeof panModel.pause==='function')panModel.pause();
   gatePlay.textContent='Play gates';gatePlay.disabled=true;
-  const name=`${panConcept.value}_pan_${panView.value}`;
-  panModel.src=editionUrl(`assets/p4/${name}.glb`);panModel.poster=editionUrl(`assets/p4/${name}.png`);
-  document.querySelector('#pan-step').href=editionUrl(`downloads/p4/${name}.step`);
-  document.querySelector('#pan-whole').src=editionUrl(`assets/p4/${panConcept.value}_pan_cutaway.png`);
+  const concept=window.solsticeCatalog?.concepts[panConcept.value];
+  const view=concept?.views[panView.value];
+  if(!view){document.querySelector('#pan-view-status').textContent='The selected CAD view is unavailable.';return;}
+  panModel.src=editionUrl(view.model);panModel.poster=editionUrl(view.poster);
+  document.querySelector('#pan-step').href=editionUrl(view.step);
+  document.querySelector('#pan-whole').src=editionUrl(concept.overview);
   document.querySelector('#pan-view-status').textContent='Loading selected view…';
 }
 panConcept.addEventListener('change',changePanView);panView.addEventListener('change',changePanView);
+fetch(editionUrl('catalog.json')).then(response=>{
+  if(!response.ok)throw new Error('catalog unavailable');
+  return response.json();
+}).then(catalog=>{
+  window.solsticeCatalog=catalog;
+  changePanView();
+}).catch(()=>{
+  document.querySelector('#pan-view-status').textContent='The interactive catalogue could not load. The pictured CAD scene and download links remain available.';
+});
 panModel.addEventListener('load',()=>{
   gatePlay.disabled=panModel.availableAnimations.length===0;
   document.querySelector('#pan-view-status').textContent='Drag to orbit. Pinch to zoom. This is an assumed packaging study; actual fit is unmeasured.';
