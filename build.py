@@ -23,6 +23,8 @@ MODELS=['v1_fixed_dividers','v2_purchased_doors','solstice_baffle']
 SCENARIOS=('nominal_visual_proxy','cover_12mm_lower_stress',
            'pickup_and_tube_25pct_larger_stress','pickup_route_offset_stress',
            'narrower_shell_stress')
+SENSITIVITY_STUDIES=('cover_lowering','pickup_keepout_growth',
+                     'tube_diameter_growth','pan_inner_contraction')
 
 
 def build(preview=False):
@@ -37,6 +39,13 @@ def build(preview=False):
     for name,scenario in fit_scenarios.items():
         if set(scenario.get('concepts',{}))!={'baseline','radial','nested'}:
             raise ValueError(f'Incomplete A/B/C fit results: {name}')
+    sensitivity=fit_report.get('single_variable_proxy_sensitivity',{})
+    sensitivity_parameters=sensitivity.get('parameters',{})
+    if set(sensitivity_parameters)!=set(SENSITIVITY_STUDIES):
+        raise ValueError('Saved CAD report lacks the complete single-variable proxy sensitivity study')
+    for name,study in sensitivity_parameters.items():
+        if set(study.get('concepts',{}))!={'baseline','radial','nested'}:
+            raise ValueError(f'Incomplete A/B/C proxy sensitivity results: {name}')
     if not preview and (approval.get('status')!='accepted' or approval.get('candidate_sha256')!=identity or report.get('candidate_sha256')!=identity):
         raise ValueError('Publish only an accepted, packaged project candidate')
     dist=Path(tempfile.mkdtemp(prefix='.site-build-',dir=SITE))
@@ -209,9 +218,77 @@ def build(preview=False):
     refs=''.join(f'<article class="reference" data-level="{escape(r["complexity"])}"><p class="eyebrow">{escape(r["complexity"])} / {escape(r["engine"])}</p><h3>{escape(r["name"])}</h3><p>{escape(r["mechanism"])}</p><p><strong>Construction lesson:</strong> {escape(r["lesson"])}</p><a href="{escape(r["url"],quote=True)}" target="_blank" rel="noopener">Manufacturer source ↗</a></article>' for r in references)
     outcome_labels={'baseline':'A / Simple gated well','radial':'B / Radial collector','nested':'C / Nested reservoir'}
     def geometry_label(name):
-        if name == 'REFERENCE_tube_route_UNKNOWN':return 'tube-route proxy'
-        if name == 'REFERENCE_pan_shell_ASSUMED_INTERIOR':return 'pan-shell proxy'
+        labels={
+            'REFERENCE_tube_route_UNKNOWN':'tube-route proxy',
+            'REFERENCE_pan_shell_ASSUMED_INTERIOR':'pan-shell proxy',
+            'REFERENCE_pickup_design_test_case':'pickup test envelope',
+            'REFERENCE_OEM_cover_shape_and_height_UNKNOWN':'assumed cover proxy',
+            'REFERENCE_raised_pickup_relief_UNKNOWN':'raised cover-relief proxy'}
+        if name in labels:return labels[name]
         return name.replace('_',' ')
+    def sensitivity_value(name, value, study):
+        nominal=study['nominal_value']
+        if name=='cover_lowering':return f'{nominal-value:g} mm lower'
+        if name in ('pickup_keepout_growth','tube_diameter_growth'):
+            return f'+{value-nominal:g} mm'
+        return f'Δscale {value:g}'
+    def interior_scales(delta):
+        sx,sy=P4_PAN_PROXY['PAN_INNER_SCALE_XY']
+        return f'{sx-delta:.5f}/{sy-delta:.5f}'
+    sensitivity_cards=[]
+    for name in SENSITIVITY_STUDIES:
+        study=sensitivity_parameters[name]
+        outcomes=[]
+        for key in ('baseline','radial','nested'):
+            result=study['concepts'][key]
+            letter={'baseline':'A','radial':'B','nested':'C'}[key]
+            if result['status']=='intersection_bracketed':
+                clear=sensitivity_value(name,result['last_clear_value'],study)
+                hit=sensitivity_value(name,result['first_hit_value'],study)
+                collision=result['first_collision']
+                if 'gate' in collision:
+                    part=f"{geometry_label(collision['gate'])} at {collision['angle_deg']:g}°"
+                else:
+                    part=geometry_label(collision['insert_part'])
+                detail=(f"Clear through {clear}; first sampled hit between {clear} and {hit}. "
+                        f"Intersecting pair: {part} ↔ {geometry_label(collision['proxy'])}.")
+                if name=='pan_inner_contraction':
+                    detail+=f' Inner X/Y scales at hit: {interior_scales(result["first_hit_value"])}.'
+                status='First sampled hit bracket'
+                state='intersection'
+                last_clear=result['last_clear_value']
+                first_hit=result['first_hit_value']
+            elif result['status']=='no_intersection_within_scan':
+                limit=sensitivity_value(name,result['scan_limit'],study)
+                detail=f'No sampled hit through {limit}.'
+                if name=='pan_inner_contraction':
+                    detail+=f' End-scan inner X/Y scales: {interior_scales(result["scan_limit"])}.'
+                status='No hit in scan'
+                state='clear'
+                last_clear=result['last_clear_value']
+                first_hit=''
+            else:
+                raise ValueError(f'Unexpected proxy sensitivity status: {name}/{key}')
+            outcomes.append(
+                f'<div class="fit-sensitivity-outcome" data-sensitivity-concept="{letter}" '
+                f'data-status="{result["status"]}" data-last-clear-value="{last_clear}" '
+                f'data-first-hit-value="{first_hit}" data-scan-limit="{result.get("scan_limit", "")}">'
+                f'<strong>{letter} · {outcome_labels[key]}</strong>'
+                f'<span class="fit-state {state}">{status}</span><p>{escape(detail)}</p></div>')
+        scale_range=(f' · initial X/Y scales {interior_scales(0)}, '
+                     f'end {interior_scales(study["scan_end_value"])}'
+                     if name=='pan_inner_contraction' else '')
+        sensitivity_cards.append(
+            f'<article class="fit-sensitivity" data-sensitivity="{name}" '
+            f'data-nominal-value="{study["nominal_value"]}" data-scan-end-value="{study["scan_end_value"]}" '
+            f'data-coarse-step="{study["coarse_step"]}" data-resolution="{study["resolution"]}" '
+            f'data-unit="{escape(study["unit"],quote=True)}">'
+            f'<h4>{escape(study["label"])}</h4>'
+            f'<p class="fit-sensitivity-range">Nominal {study["nominal_value"]:g} {escape(study["unit"])} '
+            f'→ tested {study["scan_end_value"]:g} {escape(study["unit"])} · '
+            f'coarse {study["coarse_step"]:g}, refined to {study["resolution"]:g}'
+            f'{scale_range}</p>'
+            f'<div class="fit-sensitivity-outcomes">{"".join(outcomes)}</div></article>')
     fit_cards=[]
     for scenario_id,scenario in fit_scenarios.items():
         outcomes=[]
@@ -348,6 +425,7 @@ def build(preview=False):
       'STACK':f'{tolerance["mounting_stack"]["conditional_added_SST048_sheet_cases"][0]["nominal_insertion_loss_mm"]:.4f}',
       'EDITION_STATUS':'LOCAL PREVIEW / REVIEW PENDING' if preview else 'DIGITAL REVIEW COMPLETE',
       'FIT_SCENARIOS':''.join(fit_cards),'FIT_SUMMARY':escape(fit_summary),
+      'FIT_SENSITIVITY':''.join(sensitivity_cards),
       'FIT_PATHS':''.join(path_cards),'FIT_PATH_NOTE':escape(path_note),
       'ALT_EXIT_PATHS':''.join(alternative_cards),
       'ALT_EXIT_NOTE':escape(alternative_summary),

@@ -13,6 +13,8 @@ import zipfile
 SITE = Path(__file__).resolve().parent
 CURRENT = {'baseline': 'A', 'radial': 'B', 'nested': 'C'}
 VIEWS = {'detail', 'exploded', 'section'}
+SENSITIVITY_STUDIES = {'cover_lowering', 'pickup_keepout_growth',
+                       'tube_diameter_growth', 'pan_inner_contraction'}
 
 
 class Links(HTMLParser):
@@ -135,6 +137,60 @@ def validate_dist(dist, *, allow_preview=False):
             state = 'clear' if expected == 'clear_in_declared_proxy' else 'intersection'
             if outcomes[letter][0] != state:
                 raise ValueError(f'Site fit status disagrees with CAD report: {name}/{letter}')
+
+    sensitivity = fit_report.get('single_variable_proxy_sensitivity', {})
+    parameters = sensitivity.get('parameters', {})
+    if set(parameters) != SENSITIVITY_STUDIES:
+        raise ValueError('Saved single-variable proxy sensitivity coverage is incomplete')
+    sensitivity_cards = {name: (attrs, body) for name, attrs, body in re.findall(
+        r'<article class="fit-sensitivity" data-sensitivity="([^\"]+)"([^>]*)>(.*?)</article>',
+        fit_section.group(1), re.S)}
+    if set(sensitivity_cards) != SENSITIVITY_STUDIES:
+        raise ValueError('Site sensitivity cards disagree with the saved CAD report')
+    for name, study in parameters.items():
+        start, end = study.get('nominal_value'), study.get('scan_end_value')
+        coarse, resolution = study.get('coarse_step'), study.get('resolution')
+        if (not isinstance(start, (int, float)) or not isinstance(end, (int, float))
+                or not isinstance(coarse, (int, float)) or coarse <= 0
+                or not isinstance(resolution, (int, float)) or resolution <= 0
+                or start == end or not study.get('unit')):
+            raise ValueError(f'Invalid proxy sensitivity range or resolution: {name}')
+        attrs, card = sensitivity_cards[name]
+        metadata = {key: value for key, value in re.findall(r'data-([a-z-]+)="([^\"]*)"', attrs)}
+        expected_metadata = {
+            'nominal-value': str(start), 'scan-end-value': str(end),
+            'coarse-step': str(coarse), 'resolution': str(resolution),
+            'unit': study['unit']}
+        if metadata != expected_metadata:
+            raise ValueError(f'Site proxy sensitivity scan range disagrees with CAD: {name}')
+        outcomes = {letter: (status, last_clear, first_hit, scan_limit, state)
+                    for letter, status, last_clear, first_hit, scan_limit, state in re.findall(
+                        r'<div class="fit-sensitivity-outcome" data-sensitivity-concept="([ABC])" '
+                        r'data-status="([^"]+)" data-last-clear-value="([^"]+)" '
+                        r'data-first-hit-value="([^"]*)" data-scan-limit="([^"]*)">.*?'
+                        r'<span class="fit-state (clear|intersection)">', card, re.S)}
+        if set(outcomes) != set(CURRENT.values()):
+            raise ValueError(f'Proxy sensitivity card does not cover A/B/C: {name}')
+        for concept_key, letter in CURRENT.items():
+            result = study.get('concepts', {}).get(concept_key, {})
+            status = result.get('status')
+            if status == 'intersection_bracketed':
+                clear = result.get('last_clear_value')
+                hit = result.get('first_hit_value')
+                width = abs(hit-clear) if isinstance(clear, (int, float)) and isinstance(hit, (int, float)) else None
+                if (width is None or width <= 0 or width > resolution + 1e-9
+                        or min(start, end) > min(clear, hit) or max(clear, hit) > max(start, end)
+                        or not result.get('first_collision')):
+                    raise ValueError(f'Invalid refined proxy hit bracket: {name}/{concept_key}')
+                expected = (status, str(clear), str(hit), '', 'intersection')
+            elif status == 'no_intersection_within_scan':
+                if result.get('last_clear_value') != end or result.get('scan_limit') != end:
+                    raise ValueError(f'Incomplete proxy no-hit scan: {name}/{concept_key}')
+                expected = (status, str(end), '', str(end), 'clear')
+            else:
+                raise ValueError(f'Invalid proxy sensitivity outcome: {name}/{concept_key}')
+            if outcomes[letter] != expected:
+                raise ValueError(f'Site proxy sensitivity disagrees with CAD: {name}/{letter}')
 
     nominal = scenarios.get('nominal_visual_proxy', {}).get('concepts', {})
     path_section = re.search(r'<div class="fit-path-grid">(.*?)</div></section>', index, re.S)
@@ -379,6 +435,8 @@ def validate_dist(dist, *, allow_preview=False):
             raise ValueError('Private review/history/research files entered the public ZIP')
     return {'status': 'passed', 'concepts': len(CURRENT), 'views': len(CURRENT)*len(VIEWS),
             'fit_scenarios': len(scenarios),
+            'proxy_sensitivity_studies': len(parameters),
+            'proxy_sensitivity_concept_checks': len(parameters)*len(CURRENT),
             'installation_path_concepts': len(path_cards),
             'installation_paths': len(path_cards)*len(route_names),
             'installation_path_context_checks': len(path_context_results),

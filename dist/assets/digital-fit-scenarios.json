@@ -1,6 +1,6 @@
 {
   "input_sha256": {
-    "concepts/p4/checks/validate.py": "d086713a6219612e8ef54e294ebc8ba6f08441952dafb268a6e1183076ab3ec7",
+    "concepts/p4/checks/validate.py": "c34a458084566080d1b1bca47de472cc7c4c748f62064a4db7014e0da66cf75a",
     "concepts/p4/src/advanced_geometry.py": "9a4b7eb38f95f3775750839980d982f960620f57de72868ec3380a3c38c62a44",
     "concepts/p4/src/pan_reference.py": "4f67c0306f6548545260e5a8f47fc2a711487da65fa28566eb714b66915b8a62",
     "src/parts.py": "1787cead90791e1e23a2e40fa698cd0af5e06d4b6d50020763f2dc4f4007e95b",
@@ -7502,6 +7502,217 @@
     "Alternative exit paths are eight selected nominal-proxy sensitivities; shifts/tilts start at installed height, and the first collision does not prove no other path exists.",
     "Passing proxy clearance does not establish OEM fit, oil control, thermal or fabrication clearance."
   ],
+  "single_variable_proxy_sensitivity": {
+    "scope": "One proxy parameter varies at a time while saved insert placement stays fixed. Each exact Boolean probe checks all fixed parts and every gate at the declared sampled angles against only the relevant changed proxy surfaces.",
+    "angle_samples_deg": [
+      0,
+      5,
+      10,
+      15,
+      20,
+      25,
+      30,
+      35,
+      40,
+      43.897886248,
+      45,
+      50,
+      55,
+      60
+    ],
+    "parameters": {
+      "cover_lowering": {
+        "label": "Cover underside lowered",
+        "proxy_parameter": "COVER_UNDERSIDE_Z",
+        "nominal_value": 70.0,
+        "scan_end_value": 40.0,
+        "coarse_step": 2.0,
+        "resolution": 0.25,
+        "unit": "mm",
+        "concepts": {
+          "baseline": {
+            "status": "intersection_bracketed",
+            "last_clear_value": 54.25,
+            "first_hit_value": 54.0,
+            "bracket_width": 0.25,
+            "resolution": 0.25,
+            "first_collision": {
+              "insert_part": "top_frame",
+              "proxy": "REFERENCE_OEM_cover_shape_and_height_UNKNOWN",
+              "overlap_mm3": 1236.288
+            },
+            "change_from_nominal": 16.0,
+            "value_at_hit": 54.0
+          },
+          "radial": {
+            "status": "intersection_bracketed",
+            "last_clear_value": 54.25,
+            "first_hit_value": 54.0,
+            "bracket_width": 0.25,
+            "resolution": 0.25,
+            "first_collision": {
+              "insert_part": "radial_open_rim",
+              "proxy": "REFERENCE_OEM_cover_shape_and_height_UNKNOWN",
+              "overlap_mm3": 1214.368
+            },
+            "change_from_nominal": 16.0,
+            "value_at_hit": 54.0
+          },
+          "nested": {
+            "status": "intersection_bracketed",
+            "last_clear_value": 54.25,
+            "first_hit_value": 54.0,
+            "bracket_width": 0.25,
+            "resolution": 0.25,
+            "first_collision": {
+              "insert_part": "outer_open_rim",
+              "proxy": "REFERENCE_OEM_cover_shape_and_height_UNKNOWN",
+              "overlap_mm3": 982.077158
+            },
+            "change_from_nominal": 16.0,
+            "value_at_hit": 54.0
+          }
+        }
+      },
+      "pickup_keepout_growth": {
+        "label": "Pickup test envelope enlarged",
+        "proxy_parameter": "PICKUP_KEEP_OUT_DIAMETER",
+        "nominal_value": 60.0,
+        "scan_end_value": 90.0,
+        "coarse_step": 2.0,
+        "resolution": 0.5,
+        "unit": "mm",
+        "concepts": {
+          "baseline": {
+            "status": "intersection_bracketed",
+            "last_clear_value": 66.0,
+            "first_hit_value": 66.5,
+            "bracket_width": 0.5,
+            "resolution": 0.5,
+            "first_collision": {
+              "gate": "rear",
+              "angle_deg": 60,
+              "proxy": "REFERENCE_pickup_design_test_case",
+              "overlap_mm3": 0.262688
+            },
+            "change_from_nominal": 6.5,
+            "value_at_hit": 66.5
+          },
+          "radial": {
+            "status": "no_intersection_within_scan",
+            "last_clear_value": 90.0,
+            "scan_limit": 90.0,
+            "resolution": 0.5,
+            "first_collision": null,
+            "maximum_tested_change": 30.0
+          },
+          "nested": {
+            "status": "intersection_bracketed",
+            "last_clear_value": 66.0,
+            "first_hit_value": 66.5,
+            "bracket_width": 0.5,
+            "resolution": 0.5,
+            "first_collision": {
+              "gate": "inner_rear",
+              "angle_deg": 60,
+              "proxy": "REFERENCE_pickup_design_test_case",
+              "overlap_mm3": 0.262688
+            },
+            "change_from_nominal": 6.5,
+            "value_at_hit": 66.5
+          }
+        }
+      },
+      "tube_diameter_growth": {
+        "label": "Tube proxy enlarged",
+        "proxy_parameter": "TUBE_DIAMETER",
+        "nominal_value": 18.0,
+        "scan_end_value": 30.0,
+        "coarse_step": 2.0,
+        "resolution": 0.5,
+        "unit": "mm",
+        "concepts": {
+          "baseline": {
+            "status": "no_intersection_within_scan",
+            "last_clear_value": 30.0,
+            "scan_limit": 30.0,
+            "resolution": 0.5,
+            "first_collision": null,
+            "maximum_tested_change": 12.0
+          },
+          "radial": {
+            "status": "no_intersection_within_scan",
+            "last_clear_value": 30.0,
+            "scan_limit": 30.0,
+            "resolution": 0.5,
+            "first_collision": null,
+            "maximum_tested_change": 12.0
+          },
+          "nested": {
+            "status": "no_intersection_within_scan",
+            "last_clear_value": 30.0,
+            "scan_limit": 30.0,
+            "resolution": 0.5,
+            "first_collision": null,
+            "maximum_tested_change": 12.0
+          }
+        }
+      },
+      "pan_inner_contraction": {
+        "label": "Pan interior uniformly narrowed",
+        "proxy_parameter": "PAN_INNER_SCALE_XY",
+        "nominal_value": 0.0,
+        "scan_end_value": 0.12,
+        "coarse_step": 0.01,
+        "resolution": 0.002,
+        "unit": "scale reduction",
+        "concepts": {
+          "baseline": {
+            "status": "no_intersection_within_scan",
+            "last_clear_value": 0.12,
+            "scan_limit": 0.12,
+            "resolution": 0.002,
+            "first_collision": null,
+            "maximum_tested_change": 0.12
+          },
+          "radial": {
+            "status": "intersection_bracketed",
+            "last_clear_value": 0.0525,
+            "first_hit_value": 0.05375,
+            "bracket_width": 0.00125,
+            "resolution": 0.002,
+            "first_collision": {
+              "insert_part": "guide_front_left",
+              "proxy": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+              "overlap_mm3": 6.06716
+            },
+            "change_from_nominal": 0.05375,
+            "value_at_hit": [
+              0.84625,
+              0.89625
+            ]
+          },
+          "nested": {
+            "status": "intersection_bracketed",
+            "last_clear_value": 0.03875,
+            "first_hit_value": 0.04,
+            "bracket_width": 0.00125,
+            "resolution": 0.002,
+            "first_collision": {
+              "insert_part": "outer_left_wall",
+              "proxy": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+              "overlap_mm3": 0.644957
+            },
+            "change_from_nominal": 0.04,
+            "value_at_hit": [
+              0.86,
+              0.91
+            ]
+          }
+        }
+      }
+    }
+  },
   "digital_scenario_status": "sensitivity_intersections_found",
   "status": "passed_nominal_sampled_geometry",
   "cut_profiles": {

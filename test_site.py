@@ -11,6 +11,8 @@ dist=SITE/'dist'
 result=validate_dist(dist,allow_preview=True)
 assert result['status']=='passed' and result['concepts']==3 and result['views']==9
 assert result['fit_scenarios']==5
+assert result['proxy_sensitivity_studies']==4
+assert result['proxy_sensitivity_concept_checks']==12
 assert result['installation_path_concepts']==3 and result['installation_paths']==6
 assert result['installation_path_context_checks']==30
 assert result['alternative_exit_paths']==8
