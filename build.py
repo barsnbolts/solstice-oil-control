@@ -4,7 +4,7 @@ from html import escape
 from html.parser import HTMLParser
 from datetime import datetime,timezone
 from urllib.parse import urlsplit,unquote
-import csv,hashlib,json,re,shutil,sys,zipfile
+import csv,hashlib,json,re,shutil,sys,tempfile,zipfile
 
 SITE=Path(__file__).resolve().parent
 ROOT=SITE.parent
@@ -25,8 +25,8 @@ def build():
     report=json.loads((ROOT/'review/delivery-validation.json').read_text())
     if approval.get('status')!='accepted' or approval.get('candidate_sha256')!=identity or report.get('candidate_sha256')!=identity:
         raise ValueError('Publish only an accepted, packaged project candidate')
-    dist=SITE/'dist'
-    dist.mkdir(exist_ok=True)
+    dist=Path(tempfile.mkdtemp(prefix='.site-build-',dir=SITE))
+    revision=re.search(r'status — ([^,]+)',(ROOT/'STATUS.md').read_text()).group(1)
     for name in ('assets','downloads','notes'):(dist/name).mkdir(exist_ok=True)
     public={}
     def copy(source,target):
@@ -122,7 +122,7 @@ def build():
     dxfs=''.join(f'<a href="downloads/{p.name}" download>{p.stem.replace("_"," ")} ↓</a>' for p in sorted((ROOT/'DXF').glob('*.dxf')))
     now=datetime.now(timezone.utc)
     template=(SITE/'index.template.html').read_text()
-    values={'REVISION':'P3','DATE':now.isoformat(),'DATE_LABEL':now.strftime('%d %b %Y, %H:%M UTC'),
+    values={'REVISION':revision,'DATE':now.isoformat(),'DATE_LABEL':now.strftime('%d %b %Y, %H:%M UTC'),
       'PROFILES':str(len(list((ROOT/'DXF').glob('*.dxf')))), 'UNKNOWN':str(sum(r['status']=='UNKNOWN' for r in rows)),
       'CONCEPTS':''.join(concepts),'MEASUREMENTS':measurements,'REFERENCES':refs,'RESOURCES':cards,'DXFS':dxfs,
       'CHEEK':f'{tolerance["cheek_gap"]["thickness_only_range_mm"][0]:.4f}',
@@ -136,12 +136,16 @@ def build():
             if target.startswith('downloads/'):z.write(dist/target,source)
         for source in DOCS:
             if source.startswith('delivery/') or source=='QUALITY.md':z.write(ROOT/source,source)
-        z.writestr('READ_ME_FIRST.txt','Solstice GXP nominal prototype exports, P3. Fit and engine-use release held.\nUse delivery/BOM.csv for variant quantities and DXF paths; do not order all profiles.\nSource CAD is under src/ and uses pinned cadgen==0.7.21. Native animation sidecars accompany STEP files.\nThis curated public export is not the complete local validation/evidence workspace.\nRead the fabrication, uncertainty and measurement notes before bench work.\n')
+        z.writestr('READ_ME_FIRST.txt',f'Solstice GXP nominal prototype exports, {revision}. Fit and engine-use release held.\nUse delivery/BOM.csv for variant quantities and DXF paths; do not order all profiles.\nSource CAD is under src/ and uses pinned cadgen==0.7.21. Native animation sidecars accompany STEP files.\nThis curated public export is not the complete local validation/evidence workspace.\nRead the fabrication, uncertainty and measurement notes before bench work.\n')
     (dist/'.nojekyll').touch()
     edition=hashlib.sha256(''.join(sha(p) for p in sorted(dist.rglob('*')) if p.is_file() and p.name!='version.json').encode()).hexdigest()[:16]
     (dist/'index.html').write_text(template.replace('@@EDITION@@',edition))
     (dist/'version.json').write_text(json.dumps({'edition':edition,'updated_at':now.isoformat(),'candidate_sha256':identity})+'\n')
     validate(dist)
+    previous=SITE/'.previous-dist'
+    if previous.exists():shutil.rmtree(previous)
+    if (SITE/'dist').exists():(SITE/'dist').rename(previous)
+    dist.rename(SITE/'dist');dist=SITE/'dist'
     print(json.dumps({'site_files':len([p for p in dist.rglob('*') if p.is_file()]),'edition':edition,'source_candidate':identity}))
 
 
