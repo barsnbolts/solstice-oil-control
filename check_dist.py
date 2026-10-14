@@ -398,6 +398,109 @@ def validate_dist(dist, *, allow_preview=False):
     if f'data-tool-access-checks="{tool_checks}"' not in access_section.group(1):
         raise ValueError('Pin-tool displayed coverage count disagrees with saved CAD')
 
+    heading = fit_report.get('heading_accessory_study', {})
+    audit = heading.get('source_audit', {})
+    heading_states = ('clear_in_declared_rigid_clock_bound', 'blocked_by_fixture_geometry',
+                      'blocked_at_sampled_rigid_clock', 'unresolved_between_samples_or_bound_excess')
+    source_key = 'research/heading-accessory-source/Orbitform_HL200_original.step'
+    if (set(heading.get('contexts', {})) != tool_contexts
+            or set(heading.get('concepts', {})) != set(CURRENT)
+            or audit.get('solid_count') != 8
+            or audit.get('source_sha256') != fit_report['input_sha256'].get(source_key)):
+        raise ValueError('Incomplete source-bound heading accessory study')
+    for name in ('body_diameter_mm', 'mount_to_tip_plane_on_main_axis_mm', 'distal_blank_diameter_mm', 'tilt_deg'):
+        if not math.isfinite(audit.get(name, 0)) or audit.get(name, 0) <= 0:
+            raise ValueError('Invalid native heading datum dimension')
+    volume_tol = fit_report['volume_tolerance_mm3']
+    for value in (audit.get('distal_cylinder_residual_mm3', -1),
+                  heading.get('rigid_clock_bound', {}).get('global_radial_residual_mm3', -1)):
+        if not math.isfinite(value) or not 0 <= value <= volume_tol:
+            raise ValueError('Invalid heading-envelope source containment')
+    clock_angles = heading['parameters']['RIGID_CLOCK_ANGLES_DEG']
+    if clock_angles != list(range(0, 360, 30)):
+        raise ValueError('Unexpected declared heading clock samples')
+    heading_cases = heading_bounds = heading_samples = 0
+    state_counts = [0]*len(heading_states)
+
+    def heading_hit_state(outcome):
+        hits = outcome.get('intersections')
+        if (outcome.get('status') not in ('blocked', 'clear_in_declared_envelope')
+                or not isinstance(hits, list) or (outcome['status'] == 'blocked') != bool(hits)
+                or any(not hit.get('obstacle') or not math.isfinite(hit.get('overlap_mm3', 0))
+                       or hit.get('overlap_mm3', 0) <= 0 for hit in hits)):
+            raise ValueError('Contradictory heading-accessory evidence')
+        return bool(hits)
+
+    for key in CURRENT:
+        result = heading['concepts'][key]
+        rows = result.get('results', [])
+        expected = {(gate, end) for gate in gravity_concepts[key] for end in ('minus', 'plus')}
+        identities = [(row.get('gate'), row.get('end')) for row in rows]
+        if len(identities) != len(expected) or set(identities) != expected:
+            raise ValueError('Incomplete or duplicate heading pin-end coverage')
+        for row in rows:
+            if set(row.get('contexts', {})) != tool_contexts:
+                raise ValueError('Incomplete heading stage coverage')
+            prior = next(r for r in tool['concepts'][key]['results'] if
+                         (r['gate'], r['end'], r['diameter_mm']) == (row['gate'], row['end'], 6))
+            for context, outcome in row['contexts'].items():
+                status = outcome.get('status')
+                fixture_blocked = heading_hit_state(outcome['fixture'])
+                bound, native = outcome['rigid_clock_bound'], outcome.get('first_native_intersection')
+                sampled = outcome.get('sampled_clock_angles_deg', [])
+                if (status not in heading_states or outcome.get('contact_xyz_mm') != prior['contexts'][context]['contact_xyz_mm']
+                        or outcome.get('outward_axis_xyz') != prior['contexts'][context]['outward_axis_xyz']
+                        or outcome.get('tip_plane_standoff_mm') != heading['parameters']['TIP_STANDOFF_MM']):
+                    raise ValueError('Invalid heading status, contact, axis or standoff')
+                if fixture_blocked:
+                    if (status != 'blocked_by_fixture_geometry'
+                            or bound != {'status': 'not_evaluated_fixture_obstructed'} or sampled or native is not None):
+                        raise ValueError('Contradictory heading-accessory evidence')
+                else:
+                    blocked_bound = heading_hit_state(bound)
+                    heading_bounds += 1
+                    if not blocked_bound:
+                        if status != 'clear_in_declared_rigid_clock_bound' or sampled or native is not None:
+                            raise ValueError('Contradictory heading-accessory evidence')
+                    elif native is not None:
+                        if (status != 'blocked_at_sampled_rigid_clock' or not heading_hit_state(native)
+                                or sampled != clock_angles[:len(sampled)] or not sampled
+                                or native.get('clock_angle_deg') != sampled[-1]):
+                            raise ValueError('Contradictory heading-accessory evidence')
+                    elif status != 'unresolved_between_samples_or_bound_excess' or sampled != clock_angles:
+                        raise ValueError('Contradictory heading-accessory evidence')
+                heading_cases += 1; heading_samples += len(sampled)
+                state_counts[heading_states.index(status)] += 1
+            motion = row['isolated_fixture_motion']
+            distances = motion['moving_distances']
+            if (motion['sample_angles_deg'] != list(range(0, 61, 10))
+                    or [d['angle_deg'] for d in distances] != motion['sample_angles_deg']
+                    or any(not math.isfinite(d['distance_mm']) or d['distance_mm'] < 0 for d in distances)
+                    or not math.isfinite(motion['minimum_moving_gap_mm'])
+                    or abs(motion['minimum_moving_gap_mm']-min(d['distance_mm'] for d in distances)) > 1e-9
+                    or not 0 <= motion['anvil_to_final_head_distance_mm'] <= 1e-6
+                    or len(motion['pad_to_fixed_cheek_distances_mm']) != 2
+                    or any(not 0 <= d <= 1e-6 for d in motion['pad_to_fixed_cheek_distances_mm'])):
+                raise ValueError('Invalid heading fixture contacts or moving clearance')
+        for context in tool_contexts:
+            expected_summary = {state: sum(row['contexts'][context]['status'] == state for row in rows)
+                                for state in heading_states} | {'total_pin_ends': len(rows)}
+            if result['summary'][context] != expected_summary:
+                raise ValueError('Heading summary disagrees with per-end evidence')
+    attributes = (f'data-heading-cases="{heading_cases}"', f'data-heading-clock-bounds="{heading_bounds}"',
+                  f'data-heading-native-samples="{heading_samples}"',
+                  f'data-heading-state-counts="{",".join(map(str, state_counts))}"')
+    if not all(attribute in access_section.group(1) for attribute in attributes):
+        raise ValueError('Heading displayed counts disagree with saved evidence')
+    for name in ('heading_hinge_setup', 'heading_wall_setup', 'heading_cage_setup'):
+        card = re.search(f'<article class="fit-path-card" data-heading-scene="{name}">(.*?)</article>',
+                         access_section.group(1), re.S)
+        if not card:
+            raise ValueError('Missing heading stage scene')
+        links = {urlsplit(url).path for url in re.findall(r'(?:href|src)="([^"]+)"', card.group(1))}
+        if not {f'assets/p4/{name}.png', f'downloads/p4/{name}.step'} <= links:
+            raise ValueError('Missing heading scene asset or STEP')
+
     selector = re.search(r'<select id="pan-concept">(.*?)</select>', index, re.S)
     values = set(re.findall(r'<option value="([^"]+)"', selector.group(1))) if selector else set()
     if values != set(CURRENT):
@@ -513,6 +616,8 @@ def validate_dist(dist, *, allow_preview=False):
             'alternative_exit_path_checks': alternative_results,
             'gravity_gate_cases': sum(len(gates)*len(gravity_cases) for gates in gravity_concepts.values()),
             'tool_access_rows': tool_rows, 'tool_access_checks': tool_checks,
+            'heading_stage_cases': heading_cases, 'heading_clock_bounds': heading_bounds,
+            'heading_native_samples': heading_samples,
             'candidate_sha256': candidate, 'zip_members': len(members),
             'current_profiles': len(current_profiles), 'download_profiles': total_profiles,
             'download_profile_paths': len(dxf_members)}

@@ -19,6 +19,7 @@ DOCS=['delivery/README.md','delivery/NEXT_DECISIONS.md','delivery/INTERFACE_ASSE
       'research/exact-interface-followup.md','research/honda-precedents.md',
       'research/same-pan-family-visuals.md',
       'research/pin-tool-access.md','review/pin-tool-access-assessment.md',
+      'research/heading-accessory.md','review/heading-accessory-assessment.md',
       'review/digital-fit-scenario-assessment.md','concepts/p4/CONCEPTS.md','concepts/p4/PAN_CONTEXT.md']
 MODELS=['v1_fixed_dividers','v2_purchased_doors','solstice_baffle']
 SCENARIOS=('nominal_visual_proxy','cover_12mm_lower_stress',
@@ -431,8 +432,8 @@ def build(preview=False):
                       if name!='nominal_visual_proxy')]
     clear_text=', '.join(clear_all) if clear_all else 'None'
     sensitive_text=', '.join(sensitive) if sensitive else 'None'
-    fit_summary=(f'{clear_text} has no exact intersections in all {len(fit_scenarios)} declared contexts. '
-                 f'{sensitive_text} shows intersections in one or more deliberate stress cases. '
+    fit_summary=(f'Clear in all {len(fit_scenarios)} modeled contexts: {clear_text}. '
+                 f'Stress-case intersections: {sensitive_text}. '
                  'These cases are not measured bounds or predictions of the actual pan.')
     resources=[('CONCEPTS','Creative gated designs','New radial and nested architectures, cut quantities and tradeoffs.'),('PAN_CONTEXT','Pan assumptions','Which dimensions are sourced and which are design test cases.'),('NEXT_DECISIONS','Digital fitment plan','Current scenario work and the next digital checks.'),('INTERFACE_ASSESSMENT','Evidence & uncertainty','Exact-pan sources, supported identities and hidden fit gaps.'),('same-pan-family-visuals','GM and Vue pan references','Exact-part GM photos and qualified Vue service illustrations.'),('TOLERANCE_SENSITIVITY','Tolerance sensitivity','Reproducible conditional budgets for the hinge and mounting stack.'),('README','Fabrication & fit notes','Stock, quantities, assembly intent and unresolved release holds.'),('SENDCUTSEND_PREFLIGHT','SendCutSend preparation','Cut-file review and supplier/process boundaries.'),('QUALITY','Design & production standards','The project criteria for each development stage.'),('honda-precedents','Honda precedents','OEM, aftermarket, catalog and patent architecture notes.')]
     cards=''.join(f'<a class="resource" href="notes/{name}.html"><h3>{title} ↗</h3><p>{description}</p></a>' for name,title,description in resources)
@@ -440,6 +441,42 @@ def build(preview=False):
     now=datetime.now(timezone.utc)
     template=(SITE/'index.template.html').read_text()
     concepts_note=('<p class="small">Comparison values come from saved CAD solids and net DXF profiles; installed cut area excludes A’s five loose mounting blanks. Mass assumes 7.9 kg/dm³ stainless and excludes weld filler; pin grade is unresolved. Window area is gross wall cutout area, not effective open area, flow capacity, or oil-control evidence.</p>')
+    heading=fit_report['heading_accessory_study']
+    heading_outcomes=[outcome for result in heading['concepts'].values()
+                      for row in result['results'] for outcome in row['contexts'].values()]
+    heading_states=('clear_in_declared_rigid_clock_bound','blocked_by_fixture_geometry',
+                    'blocked_at_sampled_rigid_clock','unresolved_between_samples_or_bound_excess')
+    heading_counts=[sum(o['status']==state for o in heading_outcomes) for state in heading_states]
+    heading_bounds=sum(o['rigid_clock_bound']['status']!='not_evaluated_fixture_obstructed'
+                       for o in heading_outcomes)
+    heading_samples=sum(len(o['sampled_clock_angles_deg']) for o in heading_outcomes)
+    heading_cards=[]
+    for name,title,detail in (
+        ('heading_hinge_setup','Before wall attachment','A rear hinge: sourced accessory and proposed saddle around isolated hardware.'),
+        ('heading_wall_setup','Wall-attached module','The same A rear hinge: its attached wall intersects this saddle.'),
+        ('heading_cage_setup','Completed cage example','C inner rear hinge: later cage structure also obstructs this setup.')):
+        heading_cards.append(f'<article class="fit-path-card" data-heading-scene="{name}">'
+            f'<h4>{title}</h4><img src="assets/p4/{name}.png" width="1200" height="900" loading="lazy" '
+            f'alt="{escape(detail)} Gray marks the source body, gold the terminal blank and gate leaf, and purple the assumed saddle.">'
+            f'<p class="small">{detail}</p><a class="text-link" href="downloads/p4/{name}.step" download>'
+            'Download static setup (STEP) ↓</a></article>')
+    heading_block=(f'<div id="heading-study" data-heading-cases="{len(heading_outcomes)}" '
+        f'data-heading-clock-bounds="{heading_bounds}" data-heading-native-samples="{heading_samples}" '
+        f'data-heading-state-counts="{",".join(map(str,heading_counts))}">'
+        '<h3>Source geometry and a support saddle.</h3>'
+        f'<p>{len(heading_outcomes)} combined stage assessments cover both ends of every A/B/C pin. '
+        f'{heading_counts[0]} clear the declared rigid-clock bound; {heading_counts[1]} are blocked by this fixture, '
+        f'{heading_counts[2]} by a sampled native pose, and {heading_counts[3]} remain unresolved. '
+        'Accessory checks stop after a confirmed fixture obstruction.</p>'
+        f'<p class="small">Static manufacturer geometry at a {heading["parameters"]["TIP_STANDOFF_MM"]:g} mm terminal-plane standoff. '
+        'Purple pieces are proposed support geometry; clamping and loads are unresolved. Whole-accessory clocking is a '
+        'declared clearance assumption, not the internal machine mechanism, forming contact or an axial approach.</p>'
+        '<details id="heading-scenes" class="study-group"><summary>View the three fixture stages · static CAD scenes</summary>'
+        f'<div class="fit-path-grid access-grid heading-grid">{"".join(heading_cards)}</div></details>'
+        '<p class="small">Reference assemblies, not extra oil-pan kit parts or order items. '
+        '<a href="notes/heading-accessory-assessment.html">Read stage/contact results ↗</a> · '
+        '<a href="notes/heading-accessory.html">Source dimensions and assumptions ↗</a> · '
+        '<a href="https://www.orbitform.com/standard-products/orbital-heads/long-reach">Manufacturer PDF/STEP source ↗</a></p></div>')
     template=template.replace('<div class="concept-grid">@@CONCEPTS@@</div>',
                               '<div class="concept-grid">@@CONCEPTS@@</div>'+concepts_note)
     catalog={'schema_version':1,'candidate_sha256':identity,'default_selection':{'concept':'nested','view':'detail'},
@@ -463,6 +500,7 @@ def build(preview=False):
       'ALT_EXIT_PATHS':''.join(alternative_cards),
       'ALT_EXIT_NOTE':escape(alternative_summary),
       'TOOL_ACCESS_CARDS':''.join(access_cards),'TOOL_ACCESS_CHECKS':str(access_checks),
+      'HEADING_STUDY':heading_block,
       'SCENARIO_COUNT':str(len(fit_scenarios))}
     for key,value in values.items():template=template.replace('@@'+key+'@@',value)
     p4_dxfs=''.join(f'<a href="downloads/p4/{path.name}" download>P4 / {path.stem.replace("_"," ")} ↓</a>' for path in sorted((ROOT/'concepts/p4/DXF').glob('*.dxf')))

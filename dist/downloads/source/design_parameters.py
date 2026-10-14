@@ -63,6 +63,21 @@ P5_TOOL_ACCESS = {
     'DISPLAY_DIAMETER_MM': 12.7,
 }
 
+# Static vendor accessory and proposed reaction saddle; no forming qualification.
+P5_HEADING_STUDY = {
+    'TIP_STANDOFF_MM': 0.5,
+    'RIGID_CLOCK_ANGLES_DEG': tuple(range(0, 360, 30)),
+    'ENVELOPE_SLAB_MM': 8.0,
+    'ENVELOPE_RADIAL_PAD_MM': 0.01,
+    'FIXTURE_BLOCK_LENGTH_MM': 25.0,
+    'FIXTURE_BLOCK_WIDTH_MM': 18.0,
+    'FIXTURE_BLOCK_HEIGHT_MM': 18.0,
+    'FIXTURE_POST_SETBACK_MM': 4.0,
+    'FIXTURE_BASE_THICKNESS_MM': 6.0,
+    'FIXTURE_HEAD_RADIAL_CLEARANCE_MM': 0.2,
+    'FIXTURE_TOOL_BORE_DIAMETER_MM': 12.0,
+}
+
 # Illustrative pan, cover, pickup and tube geometry. Only the three overall pan
 # maxima are sourced; every interior/profile/placement value is a proxy input.
 P4_PAN_PROXY = {
@@ -313,6 +328,13 @@ def parameter_register_rows():
             f'src/design_parameters.py:P5_TOOL_ACCESS[{name}]; research/pin-tool-access.md',
             'Cylindrical nose sweep only; actual heading die, body, jaws and forming process unknown',
             'DESIGN_TOOL_ENVELOPE_ASSUMPTION'))))
+    for name, value in P5_HEADING_STUDY.items():
+        rows.append(dict(zip(REGISTER_FIELDS, (
+            'HEADING_STUDY_'+name, _register_value(value), 'deg' if name.endswith('_DEG') else 'mm',
+            'Saved pin axis and final head face; fixture referenced to hinge pivot',
+            f'src/design_parameters.py:P5_HEADING_STUDY[{name}]; research/heading-accessory.md',
+            'Rigid clock orientations and fixture dimensions are design assumptions; actual machine motion, contact tool and force unknown',
+            'DESIGN_HEADING_STUDY_ASSUMPTION'))))
     rows.append(dict(zip(REGISTER_FIELDS, (
         'PAN_PROXY_DERIVED_LOWER_WALL_TO_FLOOR_GAP', _register_value(lower_gap), 'mm',
         'Pan-proxy Z frame; insert lower wall relative to assumed floor',

@@ -19,6 +19,7 @@ assert result['alternative_exit_paths']==8
 assert result['alternative_exit_path_checks']==24
 assert result['gravity_gate_cases']==91
 assert result['tool_access_checks']==312 and result['tool_access_rows']==78
+assert result['heading_stage_cases']==104 and result['heading_clock_bounds']==26
 index=(dist/'index.html').read_text()
 assert 'same-part-number Vue' not in index
 assert 'engine and pan part number are unspecified' in index
@@ -82,25 +83,31 @@ with tempfile.TemporaryDirectory() as directory:
         raise AssertionError('A post-review site asset edit passed the edition check')
 print('Public links, no-local-path guard, archive CRC, source/sidecars and both BOM path sets passed.')
 
-with tempfile.TemporaryDirectory() as directory:
-    bundle=Path(directory)/'dist'
-    shutil.copytree(dist,bundle,copy_function=os.link)
-    report_path=bundle/'assets/digital-fit-scenarios.json'
-    bad=json.loads(report_path.read_text())
-    outcome=bad['pin_tool_access']['concepts']['baseline']['results'][0]['contexts']['isolated_hinge_before_wall_attachment']
-    outcome['status']='blocked'
-    outcome['intersections']=[]
-    report_path.unlink();report_path.write_text(json.dumps(bad))
-    old_edition=version['edition']
-    new_edition=edition_identity(bundle,old_edition)
-    for page in bundle.rglob('*.html'):
-        content=page.read_text().replace(old_edition,new_edition)
-        page.unlink();page.write_text(content)
-    version_path=bundle/'version.json'
-    rebound={**version,'edition':new_edition}
-    version_path.unlink();version_path.write_text(json.dumps(rebound))
-    try:validate_dist(bundle,allow_preview=version.get('preview',False))
-    except ValueError as error:
-        assert 'Contradictory pin-tool access result' in str(error)
-    else:raise AssertionError('Contradictory pin-tool evidence accepted')
-print('Contradictory pin-tool evidence rejected after rebinding the fixture edition.')
+for fixture_kind in ('pin', 'heading'):
+    with tempfile.TemporaryDirectory() as directory:
+        bundle=Path(directory)/'dist'
+        shutil.copytree(dist,bundle,copy_function=os.link)
+        report_path=bundle/'assets/digital-fit-scenarios.json'
+        bad=json.loads(report_path.read_text())
+        if fixture_kind=='pin':
+            outcome=bad['pin_tool_access']['concepts']['baseline']['results'][0]['contexts']['isolated_hinge_before_wall_attachment']
+            outcome['status']='blocked';outcome['intersections']=[]
+            message='Contradictory pin-tool access result'
+        else:
+            outcome=bad['heading_accessory_study']['concepts']['baseline']['results'][0]['contexts']['isolated_wall_gate_module']
+            outcome['status']='clear_in_declared_rigid_clock_bound'
+            message='Contradictory heading-accessory evidence'
+        report_path.unlink();report_path.write_text(json.dumps(bad))
+        old_edition=version['edition']
+        new_edition=edition_identity(bundle,old_edition)
+        for page in bundle.rglob('*.html'):
+            content=page.read_text().replace(old_edition,new_edition)
+            page.unlink();page.write_text(content)
+        version_path=bundle/'version.json'
+        rebound={**version,'edition':new_edition}
+        version_path.unlink();version_path.write_text(json.dumps(rebound))
+        try:validate_dist(bundle,allow_preview=version.get('preview',False))
+        except ValueError as error:
+            assert message in str(error)
+        else:raise AssertionError(f'Contradictory {fixture_kind} evidence accepted')
+print('Contradictory pin and heading evidence rejected after rebinding the fixture edition.')

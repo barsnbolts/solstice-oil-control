@@ -1,4 +1,12 @@
 'use strict';
+function revealLinkedStudy(){
+  const target=document.getElementById(location.hash.slice(1));
+  if(!target)return;
+  for(let group=target.closest('details');group;group=group.parentElement?.closest('details'))group.open=true;
+  target.scrollIntoView({block:'start'});
+}
+window.addEventListener('hashchange',revealLinkedStudy);
+revealLinkedStudy();
 const filterButtons=[...document.querySelectorAll('[data-filter]')];
 const references=[...document.querySelectorAll('[data-level]')];
 for(const button of filterButtons)button.addEventListener('click',()=>{
