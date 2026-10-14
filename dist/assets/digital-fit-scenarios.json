@@ -1,13 +1,13 @@
 {
   "input_sha256": {
-    "concepts/p4/checks/validate.py": "6e41ec278b87f8754560f338c04a2cb8f8569b7762304d962375a95f44204116",
+    "concepts/p4/checks/validate.py": "ce27050e6dc8469218c6a65f42a0a6457456dbeac0430765cd467d7d0980ac38",
     "concepts/p4/src/advanced_geometry.py": "9a4b7eb38f95f3775750839980d982f960620f57de72868ec3380a3c38c62a44",
-    "concepts/p4/src/pan_reference.py": "4f67c0306f6548545260e5a8f47fc2a711487da65fa28566eb714b66915b8a62",
+    "concepts/p4/src/pan_reference.py": "9639e0160804184e4f355b4bafe8720bc70c91f882c90cdd708d0abb131362a0",
     "concepts/p4/src/access_reference.py": "a90d10c06ca0420c61b6dc893be95aee902ebea424493b1a2786a47bfc9a8361",
     "concepts/p4/src/heading_reference.py": "7dc5bcebbe899b2066cafe5076785b8b031f8c4e13826c075cdfbe194d909f62",
     "research/heading-accessory-source/Orbitform_HL200_original.step": "e760a01279d6adf2162973f5130710f8f4c7a0520cae738f5431172d8b0705e4",
     "src/parts.py": "1787cead90791e1e23a2e40fa698cd0af5e06d4b6d50020763f2dc4f4007e95b",
-    "src/design_parameters.py": "94e879c8f0d2a0aa7613e4023da197fe01a940a554c837d61aca05bd06915ce0",
+    "src/design_parameters.py": "40143042a1a63a2ef760e858cbf60585d1573b1cbb812e4e39999ac4f4c087de",
     "checks/profile_equivalence.py": "844d86f7408020d98cbbfcf9eff1ba1e50e224789227d2a4776bd4c5d4aa5edc",
     "STEP/solstice_baffle.step": "c8dd9266fe2493da832d34ebabe7c17c4ec6147c01a94aca87347148862d05c5",
     "concepts/p4/STEP/radial_collector.step": "b353eea18eb9b684b7a708e5dd1fd849a8949a00d645abe1d81775c800978533",
@@ -12470,7 +12470,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 5579.939792
+                    "overlap_mm3": 113.097336
                   }
                 ],
                 "intersection_counts": {
@@ -12693,7 +12693,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 14062.320141
+                    "overlap_mm3": 285.022957
                   }
                 ],
                 "intersection_counts": {
@@ -12929,7 +12929,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 24999.68025
+                    "overlap_mm3": 506.707479
                   }
                 ],
                 "intersection_counts": {
@@ -13257,7 +13257,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 5579.939792
+                    "overlap_mm3": 113.097336
                   }
                 ],
                 "intersection_counts": {
@@ -13493,7 +13493,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 14062.320141
+                    "overlap_mm3": 285.022957
                   }
                 ],
                 "intersection_counts": {
@@ -13729,7 +13729,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 24999.68025
+                    "overlap_mm3": 506.707479
                   }
                 ],
                 "intersection_counts": {
@@ -14719,7 +14719,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 3700.094646
+                    "overlap_mm3": 159.943786
                   }
                 ],
                 "intersection_counts": {
@@ -14955,7 +14955,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 9324.816646
+                    "overlap_mm3": 403.083331
                   }
                 ],
                 "intersection_counts": {
@@ -15191,7 +15191,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 16577.451814
+                    "overlap_mm3": 716.592589
                   }
                 ],
                 "intersection_counts": {
@@ -15296,7 +15296,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 3346.669095
+                    "overlap_mm3": 159.943786
                   }
                 ],
                 "intersection_counts": {
@@ -15519,7 +15519,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 8434.129035
+                    "overlap_mm3": 403.083331
                   }
                 ],
                 "intersection_counts": {
@@ -15755,7 +15755,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 14994.007174
+                    "overlap_mm3": 716.592589
                   }
                 ],
                 "intersection_counts": {
@@ -17440,7 +17440,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 5579.939792
+                    "overlap_mm3": 113.097336
                   }
                 ],
                 "intersection_counts": {
@@ -17663,7 +17663,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 14062.320141
+                    "overlap_mm3": 285.022957
                   }
                 ],
                 "intersection_counts": {
@@ -17899,7 +17899,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 24999.68025
+                    "overlap_mm3": 506.707479
                   }
                 ],
                 "intersection_counts": {
@@ -18227,7 +18227,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 5579.939792
+                    "overlap_mm3": 113.097336
                   }
                 ],
                 "intersection_counts": {
@@ -18463,7 +18463,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 14062.320141
+                    "overlap_mm3": 285.022957
                   }
                 ],
                 "intersection_counts": {
@@ -18699,7 +18699,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 24999.68025
+                    "overlap_mm3": 506.707479
                   }
                 ],
                 "intersection_counts": {
@@ -19550,7 +19550,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 5579.939792
+                    "overlap_mm3": 113.097336
                   }
                 ],
                 "intersection_counts": {
@@ -19789,7 +19789,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 14062.320141
+                    "overlap_mm3": 285.022957
                   }
                 ],
                 "intersection_counts": {
@@ -20041,7 +20041,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 24999.68025
+                    "overlap_mm3": 506.707479
                   }
                 ],
                 "intersection_counts": {
@@ -20393,7 +20393,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 5579.939792
+                    "overlap_mm3": 113.097336
                   }
                 ],
                 "intersection_counts": {
@@ -20645,7 +20645,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 14062.320141
+                    "overlap_mm3": 285.022957
                   }
                 ],
                 "intersection_counts": {
@@ -20897,7 +20897,7 @@
                   },
                   {
                     "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
-                    "overlap_mm3": 24999.68025
+                    "overlap_mm3": 506.707479
                   }
                 ],
                 "intersection_counts": {

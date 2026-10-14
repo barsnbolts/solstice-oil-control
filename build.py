@@ -17,7 +17,7 @@ DOCS=['delivery/README.md','delivery/NEXT_DECISIONS.md','delivery/INTERFACE_ASSE
       'delivery/TOLERANCE_SENSITIVITY.md','delivery/COUPON_PLAN.md','delivery/CURRENT_DIMENSIONS.md',
       'delivery/TOLERANCE_BUDGET.md','delivery/SENDCUTSEND_PREFLIGHT.md','QUALITY.md',
       'research/exact-interface-followup.md','research/honda-precedents.md',
-      'research/same-pan-family-visuals.md',
+      'research/same-pan-family-visuals.md','research/pan-camera-audit.md',
       'research/pin-tool-access.md','review/pin-tool-access-assessment.md',
       'research/heading-accessory.md','review/heading-accessory-assessment.md',
       'review/digital-fit-scenario-assessment.md','concepts/p4/CONCEPTS.md','concepts/p4/PAN_CONTEXT.md']

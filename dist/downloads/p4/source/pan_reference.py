@@ -75,6 +75,9 @@ def named(shape,label,color):
 
 def pan_shell(cutaway=True, proxy=None):
     p = P4_PAN_PROXY if proxy is None else proxy
+    underside = p['PAN_SHELF_UNDERSIDE_Z']
+    if not 0 <= underside < p['PAN_FLOOR_Z'] + p['PAN_SHELF_HEIGHT'] < p['PAN_DEPTH']:
+        raise ValueError('Shelf underside must leave positive material below its top and below the pan rim')
     outer=bd.Polygon(*p['PAN_OUTLINE_XY'],align=None)
     sx,sy=p['PAN_INNER_SCALE_XY']
     inner=bd.Polygon(*[(x*sx,y*sy) for x,y in p['PAN_OUTLINE_XY']],align=None)
@@ -85,6 +88,13 @@ def pan_shell(cutaway=True, proxy=None):
     shelf_size=p['PAN_SHELF_SIZE_XY']
     shelf=inner.intersect(bd.Pos(*shelf_center)*bd.Rectangle(*shelf_size))
     shell=shell.fuse(bd.extrude(shelf,amount=p['PAN_SHELF_HEIGHT']).translate((0,0,floor)))
+    # Photo-supported shallow exterior; relief depth and residual thickness remain proxy assumptions.
+    if underside > 0:
+        # Keep the cavity-facing transition wall; a horizontal skin alone leaves the sump open.
+        relief_center=(shelf_center[0],shelf_center[1]-floor/2)
+        relief_size=(shelf_size[0],shelf_size[1]-floor)
+        relief=outer.intersect(bd.Pos(*relief_center)*bd.Rectangle(*relief_size))
+        shell=shell.cut(bd.extrude(relief,amount=underside))
     # Three visual stiffening ribs echo the shallow extension in source photos.
     rib_size=p['PAN_RIB_SIZE_XYZ']
     for x in p['PAN_RIB_X_POSITIONS']:
