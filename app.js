@@ -21,3 +21,28 @@ async function checkEdition(){
 document.querySelector('#reload').addEventListener('click',()=>{const url=new URL(location.href);url.searchParams.set('edition',Date.now());location.assign(url);});
 document.addEventListener('visibilitychange',checkEdition);
 checkEdition();setInterval(checkEdition,60000);
+
+const editionUrl=path=>`${path}?v=${edition}`;
+const panModel=document.querySelector('#pan-model');
+const panConcept=document.querySelector('#pan-concept');
+const panView=document.querySelector('#pan-view');
+const gatePlay=document.querySelector('#gate-play');
+function changePanView(){
+  if(typeof panModel.pause==='function')panModel.pause();
+  gatePlay.textContent='Play gates';gatePlay.disabled=true;
+  const name=`${panConcept.value}_pan_${panView.value}`;
+  panModel.src=editionUrl(`assets/p4/${name}.glb`);panModel.poster=editionUrl(`assets/p4/${name}.png`);
+  document.querySelector('#pan-step').href=editionUrl(`downloads/p4/${name}.step`);
+  document.querySelector('#pan-whole').src=editionUrl(`assets/p4/${panConcept.value}_pan_cutaway.png`);
+  document.querySelector('#pan-view-status').textContent='Loading selected view…';
+}
+panConcept.addEventListener('change',changePanView);panView.addEventListener('change',changePanView);
+panModel.addEventListener('load',()=>{
+  gatePlay.disabled=panModel.availableAnimations.length===0;
+  document.querySelector('#pan-view-status').textContent='Drag to orbit. Pinch to zoom. This is an assumed packaging study; actual fit is unmeasured.';
+});
+panModel.addEventListener('error',()=>{document.querySelector('#pan-view-status').textContent='3D could not load. The still views and downloadable CAD remain available.';});
+gatePlay.addEventListener('click',()=>{
+  if(panModel.paused){panModel.play();gatePlay.textContent='Pause gates';}
+  else{panModel.pause();gatePlay.textContent='Play gates';}
+});

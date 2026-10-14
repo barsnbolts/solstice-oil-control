@@ -1,0 +1,24 @@
+variant,part,quantity,material_or_sku,thickness_mm,cut_file,notes
+radial,radial_diagonal_gated_wall,4,SST-048,1.2192,DXF/radial_diagonal_gated_wall_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+radial,radial_cardinal_side_wall,2,SST-048,1.2192,DXF/radial_cardinal_side_wall_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+radial,radial_rear_wall,1,SST-048,1.2192,DXF/radial_rear_wall_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+radial,radial_front_relief_wall,1,SST-048,1.2192,DXF/radial_front_relief_wall_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+radial,radial_open_rim,1,SST-048,1.2192,DXF/radial_open_rim_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+radial,radial_guide_vane,5,SST-048,1.2192,DXF/radial_guide_vane_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+radial,door_leaf,4,SST-030,0.762,DXF/door_leaf_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+radial,fixed_cheek,8,SST-048,1.2192,DXF/fixed_cheek_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+radial,moving_cheek,8,SST-048,1.2192,DXF/moving_cheek_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+radial,captive_pin,4,Nominal 1/8 inch stainless rod; grade/process unresolved,,,Not laser-cut; qualify permanent heading/retention on coupon
+nested,outer_rear_gated_wall,1,SST-048,1.2192,DXF/outer_rear_gated_wall_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,outer_side_gated_wall,2,SST-048,1.2192,DXF/outer_side_gated_wall_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,outer_front_relief_wall,1,SST-048,1.2192,DXF/outer_front_relief_wall_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,outer_open_rim,1,SST-048,1.2192,DXF/outer_open_rim_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,inner_rear_gated_wall,1,SST-048,1.2192,DXF/inner_rear_gated_wall_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,inner_side_gated_wall,2,SST-048,1.2192,DXF/inner_side_gated_wall_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,inner_front_relief_wall,1,SST-048,1.2192,DXF/inner_front_relief_wall_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,inner_open_rim,1,SST-048,1.2192,DXF/inner_open_rim_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,nested_rim_bridge,5,SST-048,1.2192,DXF/nested_rim_bridge_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,door_leaf,6,SST-030,0.762,DXF/door_leaf_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,fixed_cheek,12,SST-048,1.2192,DXF/fixed_cheek_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,moving_cheek,12,SST-048,1.2192,DXF/moving_cheek_cut.dxf,Nominal flat stock; owner joining/finishing; actual pan fit and mounts unresolved
+nested,captive_pin,6,Nominal 1/8 inch stainless rod; grade/process unresolved,,,Not laser-cut; qualify permanent heading/retention on coupon

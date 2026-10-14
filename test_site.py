@@ -7,12 +7,15 @@ dist=SITE/'dist'
 validate(dist)
 with zipfile.ZipFile(dist/'downloads/Solstice_prototype_files.zip') as z:
     assert z.testzip() is None
-    for name in ('delivery/BOM.csv','delivery/COUPON_BOM.csv'):
+    for name in ('delivery/BOM.csv','delivery/COUPON_BOM.csv','concepts/p4/BOM.csv'):
         for row in csv.DictReader(io.StringIO(z.read(name).decode())):
-            if row['cut_file']:assert row['cut_file'] in z.namelist(),row['cut_file']
+            if row['cut_file']:
+                target=(str(Path(name).parent/row['cut_file']) if name.startswith('concepts/') else row['cut_file'])
+                assert target in z.namelist(),target
     assert 'src/design_parameters.py' in z.namelist()
     assert 'STEP/solstice_baffle.step.json' in z.namelist()
     assert not any(name.startswith(('review/','history/','research/')) for name in z.namelist())
+    assert 'concepts/p4/src/advanced_geometry.py' in z.namelist()
 with tempfile.TemporaryDirectory() as directory:
     root=Path(directory);page=root/'index.html'
     for fixture in ('<a href="missing.pdf">missing</a>','<p>/Users/private/file</p>','<a href="../outside.html">escape</a>'):

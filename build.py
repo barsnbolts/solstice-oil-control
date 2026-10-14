@@ -3,7 +3,7 @@ from pathlib import Path
 from html import escape
 from html.parser import HTMLParser
 from datetime import datetime,timezone
-from urllib.parse import urlsplit,unquote
+from urllib.parse import urlsplit,urlunsplit,unquote
 import csv,hashlib,json,re,shutil,sys,tempfile,zipfile
 
 SITE=Path(__file__).resolve().parent
@@ -14,16 +14,16 @@ from workflow import verify_candidate,sha
 DOCS=['delivery/README.md','delivery/NEXT_DECISIONS.md','delivery/INTERFACE_ASSESSMENT.md',
       'delivery/TOLERANCE_SENSITIVITY.md','delivery/COUPON_PLAN.md','delivery/CURRENT_DIMENSIONS.md',
       'delivery/TOLERANCE_BUDGET.md','delivery/SENDCUTSEND_PREFLIGHT.md','QUALITY.md',
-      'research/exact-interface-followup.md']
+      'research/exact-interface-followup.md','concepts/p4/CONCEPTS.md','concepts/p4/PAN_CONTEXT.md']
 MODELS=['v1_fixed_dividers','v2_purchased_doors','solstice_baffle']
 
 
-def build():
+def build(preview=False):
     candidate=verify_candidate()
     identity=sha(ROOT/'review/candidate.json')
     approval=json.loads((ROOT/'review/retro-fix-approval.json').read_text())
     report=json.loads((ROOT/'review/delivery-validation.json').read_text())
-    if approval.get('status')!='accepted' or approval.get('candidate_sha256')!=identity or report.get('candidate_sha256')!=identity:
+    if not preview and (approval.get('status')!='accepted' or approval.get('candidate_sha256')!=identity or report.get('candidate_sha256')!=identity):
         raise ValueError('Publish only an accepted, packaged project candidate')
     dist=Path(tempfile.mkdtemp(prefix='.site-build-',dir=SITE))
     revision=re.search(r'status — ([^,]+)',(ROOT/'STATUS.md').read_text()).group(1)
@@ -45,6 +45,19 @@ def build():
     for name in MODELS+['v3_hinge_coupon_open']:copy(f'review/{name}.png',f'assets/{name}.png')
     for name in MODELS:copy(f'ANIMATION/{name}.mp4',f'assets/{name}.mp4')
     for name in ('style.css','app.js','icon.svg'):shutil.copy2(SITE/name,dist/name)
+
+    for folder in ('STEP','DXF','src'):
+        for path in (ROOT/'concepts/p4'/folder).iterdir():
+            if path.suffix in ('.step','.json','.dxf','.py'):
+                target=f'downloads/p4/{"source/" if folder=="src" else ""}{path.name}'
+                copy(str(path.relative_to(ROOT)),target)
+    copy('concepts/p4/BOM.csv','downloads/P4_BOM.csv')
+    p4_render=json.loads((ROOT/'concepts/p4/review/render-receipt.json').read_text())
+    for job in p4_render['jobs'].values():
+        for source in job['outputs']:copy(source,'assets/p4/'+Path(source).name)
+    copy('research/oil-pan-evidence/gm-pan-alt1.jpg','assets/gm-pan-interior.jpg')
+    for source in (SITE/'vendor').iterdir():
+        if source.is_file():shutil.copy2(source,dist/'assets'/source.name)
 
     def link_target(url,source):
         if urlsplit(url).scheme in ('https','http'):return url
@@ -115,31 +128,56 @@ def build():
     concepts=[]
     for n,(model,(title,description,note)) in enumerate(zip(MODELS,descriptions),1):
         concepts.append(f'<article class="concept"><div class="concept-head"><p class="number">0{n} / CONCEPT</p><h3>{title}</h3></div><video controls playsinline preload="none" poster="assets/{model}.png" aria-label="{title} illustrative animation"><source src="assets/{model}.mp4" type="video/mp4"><a href="assets/{model}.mp4">Download animation</a></video><div class="concept-body"><p>{description}</p><strong class="part-count">{facts["cut_counts"][f"V{n}"]} custom cut pieces</strong><p>{note}</p><div class="concept-links"><a href="downloads/{model}.step" download>STEP ↓</a><a href="downloads/{model}.glb" download>Animated GLB ↓</a><a href="downloads/BOM.csv">BOM ↗</a></div></div></article>')
+    legacy=''.join(concepts[:2])
+    current=[('A','Simple gated well','solstice_baffle','assets/solstice_baffle','downloads/solstice_baffle.step',25,3,
+              'The former V3 is now the simplest gated baseline. Three custom leaves surround the pickup region.',
+              '25 cut pieces include 5 loose mounting blanks; actual attachment is unresolved.'),
+             ('B','Radial collector','radial_collector','assets/p4/radial_collector','downloads/p4/radial_collector.step',34,4,
+              'Four diagonal gates in an octagonal well, with five joined, open-ended guide vanes.',
+              '164 × 154 mm well; full vane footprint approximately 212 × 202 mm. Mounts unresolved.'),
+             ('C','Nested reservoir','nested_collector','assets/p4/nested_collector','downloads/p4/nested_collector.step',45,6,
+              'A 224 × 208 mm outer reservoir feeds a 136 × 120 mm inner well through six staggered gates.',
+              'Staged buffering is a hypothesis. Two gate stages may also restrict refill. Mounts unresolved.')]
+    concepts=[]
+    for letter,title,model,asset,step,count,pins,description,note in current:
+        bom='downloads/BOM.csv' if letter=='A' else 'downloads/P4_BOM.csv'
+        glb='downloads/solstice_baffle.glb' if letter=='A' else asset+'.glb'
+        concepts.append(f'<article class="concept"><div class="concept-head"><p class="number">{letter} / CURRENT CONCEPT</p><h3>{title}</h3></div><video controls playsinline preload="none" poster="{asset}.png" aria-label="{title} illustrative animation"><source src="{asset}.mp4" type="video/mp4"><a href="{asset}.mp4">Download animation</a></video><div class="concept-body"><p>{description}</p><strong class="part-count">{count} cut plates + {pins} pins</strong><p>{note}</p><div class="concept-links"><a href="{step}" download>STEP ↓</a><a href="{glb}" download>Animated GLB ↓</a><a href="{bom}">BOM ↗</a></div></div></article>')
     measurements=''.join(f'<li><span class="tag">Priority {priorities[r["item"]]} · {escape(r["status"])}</span><strong>{escape(r["item"])}</strong><p>{escape(r["method"])}</p></li>' for r in sorted(rows,key=lambda r:int(priorities[r['item']])))
     refs=''.join(f'<article class="reference" data-level="{escape(r["complexity"])}"><p class="eyebrow">{escape(r["complexity"])} / {escape(r["engine"])}</p><h3>{escape(r["name"])}</h3><p>{escape(r["mechanism"])}</p><p><strong>Construction lesson:</strong> {escape(r["lesson"])}</p><a href="{escape(r["url"],quote=True)}" target="_blank" rel="noopener">Manufacturer source ↗</a></article>' for r in references)
-    resources=[('NEXT_DECISIONS','Measurement & bench plan','What to measure first, and which decision it unlocks.'),('INTERFACE_ASSESSMENT','Evidence & uncertainty','Exact-pan sources, supported identities and hidden fit gaps.'),('TOLERANCE_SENSITIVITY','Tolerance sensitivity','Reproducible conditional budgets for the hinge and mounting stack.'),('README','Fabrication & fit notes','Stock, quantities, assembly intent and unresolved release holds.'),('SENDCUTSEND_PREFLIGHT','SendCutSend preparation','Cut-file review and supplier/process boundaries.'),('QUALITY','Design & production standards','The project criteria for each development stage.')]
+    resources=[('CONCEPTS','Creative gated designs','New radial and nested architectures, cut quantities and tradeoffs.'),('PAN_CONTEXT','Pan assumptions','Which dimensions are sourced and which are design test cases.'),('NEXT_DECISIONS','Measurement & bench plan','What to measure first, and which decision it unlocks.'),('INTERFACE_ASSESSMENT','Evidence & uncertainty','Exact-pan sources, supported identities and hidden fit gaps.'),('TOLERANCE_SENSITIVITY','Tolerance sensitivity','Reproducible conditional budgets for the hinge and mounting stack.'),('README','Fabrication & fit notes','Stock, quantities, assembly intent and unresolved release holds.'),('SENDCUTSEND_PREFLIGHT','SendCutSend preparation','Cut-file review and supplier/process boundaries.'),('QUALITY','Design & production standards','The project criteria for each development stage.')]
     cards=''.join(f'<a class="resource" href="notes/{name}.html"><h3>{title} ↗</h3><p>{description}</p></a>' for name,title,description in resources)
     dxfs=''.join(f'<a href="downloads/{p.name}" download>{p.stem.replace("_"," ")} ↓</a>' for p in sorted((ROOT/'DXF').glob('*.dxf')))
     now=datetime.now(timezone.utc)
     template=(SITE/'index.template.html').read_text()
     values={'REVISION':revision,'DATE':now.isoformat(),'DATE_LABEL':now.strftime('%d %b %Y, %H:%M UTC'),
-      'PROFILES':str(len(list((ROOT/'DXF').glob('*.dxf')))), 'UNKNOWN':str(sum(r['status']=='UNKNOWN' for r in rows)),
-      'CONCEPTS':''.join(concepts),'MEASUREMENTS':measurements,'REFERENCES':refs,'RESOURCES':cards,'DXFS':dxfs,
+      'PROFILES':str(len({p.name for folder in (ROOT/'DXF',ROOT/'concepts/p4/DXF') for p in folder.glob('*.dxf')})), 'UNKNOWN':str(sum(r['status']=='UNKNOWN' for r in rows)),
+      'CONCEPTS':''.join(concepts),'LEGACY':legacy,'MEASUREMENTS':measurements,'REFERENCES':refs,'RESOURCES':cards,'DXFS':dxfs,
       'CHEEK':f'{tolerance["cheek_gap"]["thickness_only_range_mm"][0]:.4f}',
       'ROOF':f'{tolerance["continuous_roof"]["gap_mm"]:.3f}',
       'STACK':f'{tolerance["mounting_stack"]["conditional_added_SST048_sheet_cases"][0]["nominal_insertion_loss_mm"]:.4f}'}
+    if preview:template=template.replace('DIGITAL REVIEW COMPLETE','LOCAL PREVIEW / REVIEW PENDING')
     for key,value in values.items():template=template.replace('@@'+key+'@@',value)
+    p4_dxfs=''.join(f'<a href="downloads/p4/{path.name}" download>P4 / {path.stem.replace("_"," ")} ↓</a>' for path in sorted((ROOT/'concepts/p4/DXF').glob('*.dxf')))
+    template=template.replace('@@P4_DXFS@@',p4_dxfs)
     (dist/'index.html').write_text(template)
     # Public download is curated; private review logs and third-party source archives stay local.
     with zipfile.ZipFile(dist/'downloads/Solstice_prototype_files.zip','w',zipfile.ZIP_DEFLATED) as z:
         for source,target in sorted(public.items()):
             if target.startswith('downloads/'):z.write(dist/target,source)
         for source in DOCS:
-            if source.startswith('delivery/') or source=='QUALITY.md':z.write(ROOT/source,source)
+            if source.startswith(('delivery/','concepts/')) or source=='QUALITY.md':z.write(ROOT/source,source)
         z.writestr('READ_ME_FIRST.txt',f'Solstice GXP nominal prototype exports, {revision}. Fit and engine-use release held.\nUse delivery/BOM.csv for variant quantities and DXF paths; do not order all profiles.\nSource CAD is under src/ and uses pinned cadgen==0.7.21. Native animation sidecars accompany STEP files.\nThis curated public export is not the complete local validation/evidence workspace.\nRead the fabrication, uncertainty and measurement notes before bench work.\n')
     (dist/'.nojekyll').touch()
     edition=hashlib.sha256(''.join(sha(p) for p in sorted(dist.rglob('*')) if p.is_file() and p.name!='version.json').encode()).hexdigest()[:16]
-    (dist/'index.html').write_text(template.replace('@@EDITION@@',edition))
+    def version_link(match):
+        attr,url=match.groups();parts=urlsplit(url)
+        if parts.scheme or not parts.path:return match.group(0)
+        separator='&amp;' if parts.query else ''
+        return f'{attr}="'+urlunsplit(parts._replace(query=parts.query+separator+'v='+edition))+'"'
+    for page in dist.rglob('*.html'):
+        html=page.read_text().replace('@@EDITION@@',edition)
+        page.write_text(re.sub(r'(href|src|poster)="([^"]+)"',version_link,html))
     (dist/'version.json').write_text(json.dumps({'edition':edition,'updated_at':now.isoformat(),'candidate_sha256':identity})+'\n')
     validate(dist)
     previous=SITE/'.previous-dist'
@@ -165,4 +203,4 @@ def validate(dist):
                 parser=Links();parser.path=path;parser.feed(data)
 
 
-if __name__=='__main__':build()
+if __name__=='__main__':build(preview='--preview' in sys.argv)
