@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "candidate_sha256": "4451b3a2d67455d3da911f66e86fe0bbcb77654f84bd8a102d3cd2845392e75e",
+  "candidate_sha256": "5d34c59cd4d9ba4e49768211ed1977c8a9f72e2962ac129c9314b8dd6ea1193b",
   "default_selection": {
     "concept": "nested",
     "view": "detail"
@@ -21,6 +21,12 @@
       "gates": 3,
       "cut_plates": 25,
       "pins": 3,
+      "comparison": {
+        "installed_net_cut_area_mm2": 34938.00672871328,
+        "estimated_metal_mass_g": 336.04813038879183,
+        "estimated_moving_gate_mass_g": 41.36240303803554,
+        "gross_gate_window_area_mm2": 1728.0
+      },
       "overview": "assets/p4/baseline_pan_cutaway.png",
       "views": {
         "detail": {
@@ -55,6 +61,12 @@
       "gates": 4,
       "cut_plates": 34,
       "pins": 4,
+      "comparison": {
+        "installed_net_cut_area_mm2": 38292.82951496883,
+        "estimated_metal_mass_g": 368.2061865027093,
+        "estimated_moving_gate_mass_g": 55.14987071738072,
+        "gross_gate_window_area_mm2": 2304.0
+      },
       "overview": "assets/p4/radial_pan_cutaway.png",
       "views": {
         "detail": {
@@ -89,6 +101,12 @@
       "gates": 6,
       "cut_plates": 45,
       "pins": 6,
+      "comparison": {
+        "installed_net_cut_area_mm2": 84532.01345742655,
+        "estimated_metal_mass_g": 813.2581628575836,
+        "estimated_moving_gate_mass_g": 82.72480607607108,
+        "gross_gate_window_area_mm2": 3456.0
+      },
       "overview": "assets/p4/nested_pan_cutaway.png",
       "views": {
         "detail": {

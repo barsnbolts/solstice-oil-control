@@ -1,6 +1,9 @@
 """Check public packet paths and reject broken/local website links."""
 from pathlib import Path
+from html import unescape
+from urllib.parse import parse_qs,urlsplit
 import csv,io,json,os,shutil,tempfile,zipfile
+import re
 from build import SITE
 from check_dist import edition_identity, validate_dist
 
@@ -13,6 +16,17 @@ assert result['installation_path_context_checks']==30
 assert result['alternative_exit_paths']==8
 assert result['alternative_exit_path_checks']==24
 assert result['gravity_gate_cases']==91
+catalog=json.loads((dist/'catalog.json').read_text())
+for concept in catalog['concepts'].values():
+    metrics=concept['comparison']
+    assert all(value>0 for value in metrics.values())
+assert 'estimated_moving_gate_mass_g' in catalog['concepts']['nested']['comparison']
+honda_page=(dist/'notes/honda-precedents.html').read_text()
+journal_link=re.search(r'href="(https://gcxyxb\.fjut\.edu\.cn/oa/DArticle\.aspx\?[^\"]+)"',honda_page)
+assert journal_link and parse_qs(urlsplit(unescape(journal_link.group(1))).query)=={
+    'id':['201704004'],'type':['view']
+}
+assert '&amp;amp;' not in journal_link.group(1)
 version=json.loads((dist/'version.json').read_text())
 if version.get('preview'):
     try:

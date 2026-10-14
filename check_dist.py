@@ -6,6 +6,7 @@ import csv
 import hashlib
 import io
 import json
+import math
 import re
 import zipfile
 
@@ -281,11 +282,15 @@ def validate_dist(dist, *, allow_preview=False):
     if view_values != VIEWS:
         raise ValueError(f'View selector and catalog differ: {view_values}')
 
-    cards = {key: (well, envelope, gates, cuts, pins, card)
-             for key, well, envelope, gates, cuts, pins, card in re.findall(
+    cards = {key: (well, envelope, gates, cuts, pins, area, mass, moving_mass, window_area, card)
+             for key, well, envelope, gates, cuts, pins, area, mass, moving_mass, window_area, card in re.findall(
                  r'<article class="concept" data-concept="([^"]+)" data-well-mm="([^"]+)" '
                  r'data-envelope-mm="([^"]+)" data-gates="([^"]+)" '
-                 r'data-cut-plates="([^"]+)" data-pins="([^"]+)"(.*?)</article>', index, re.S)}
+                 r'data-cut-plates="([^"]+)" data-pins="([^"]+)" '
+                 r'data-installed-net-cut-area-mm2="([^"]+)" '
+                 r'data-estimated-metal-mass-g="([^"]+)" '
+                 r'data-estimated-moving-gate-mass-g="([^"]+)" '
+                 r'data-gross-gate-window-area-mm2="([^"]+)"(.*?)</article>', index, re.S)}
     if set(cards) != set(CURRENT):
         raise ValueError('Current A/B/C cards do not match the catalog')
 
@@ -297,11 +302,22 @@ def validate_dist(dist, *, allow_preview=False):
                 and all(isinstance(value, (int, float)) and value > 0
                         for value in (*concept['well_mm'], *concept['envelope_mm']))):
             raise ValueError(f'Invalid nominal dimensions: {key}')
-        well, envelope, gates, cuts, pins, card = cards[key]
+        well, envelope, gates, cuts, pins, area, mass, moving_mass, window_area, card = cards[key]
         if (well != dimension(concept['well_mm']) or envelope != dimension(concept['envelope_mm'])
                 or int(gates) != concept['gates'] or int(cuts) != concept['cut_plates']
                 or int(pins) != concept['pins']):
             raise ValueError(f'Website card disagrees with shared catalog: {key}')
+        comparison = concept.get('comparison', {})
+        expected_metrics = (
+            ('installed_net_cut_area_mm2', area),
+            ('estimated_metal_mass_g', mass),
+            ('estimated_moving_gate_mass_g', moving_mass),
+            ('gross_gate_window_area_mm2', window_area),
+        )
+        if any(name not in comparison or not math.isclose(comparison[name], float(value),
+                                                          rel_tol=0, abs_tol=0.001)
+               for name, value in expected_metrics):
+            raise ValueError(f'Website card comparison metrics disagree with catalog: {key}')
         paths = [concept.get('overview', '')]
         for stage, entry in concept['views'].items():
             if set(entry) != {'model', 'poster', 'step'}:

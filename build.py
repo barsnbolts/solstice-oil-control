@@ -85,13 +85,17 @@ def build(preview=False):
         if key in DOCS:return Path(key).stem+'.html'
         return None
     def inline(raw,source):
-        value=escape(raw)
+        links=[]
         def link(match):
             label,url=match.groups();target=link_target(url,source)
-            return f'<a href="{escape(target,quote=True)}">{label}</a>' if target else label
-        value=re.sub(r'\[([^\]]+)\]\(([^)]+)\)',link,value)
+            if not target:return label
+            links.append(f'<a href="{escape(target,quote=True)}">{escape(label)}</a>')
+            return f'__INLINE_LINK_{len(links)-1}__'
+        value=escape(re.sub(r'\[([^\]]+)\]\(([^)]+)\)',link,raw))
         value=re.sub(r'`([^`]+)`',r'<code>\1</code>',value)
-        return re.sub(r'\*\*([^*]+)\*\*',r'<strong>\1</strong>',value)
+        value=re.sub(r'\*\*([^*]+)\*\*',r'<strong>\1</strong>',value)
+        for index,html in enumerate(links):value=value.replace(f'__INLINE_LINK_{index}__',html)
+        return value
     def document(source):
         # Deliberately limited to the Markdown constructs used in this reviewed packet.
         text=(ROOT/source).read_text()
@@ -180,14 +184,21 @@ def build(preview=False):
         dimensions=facts['concepts'][letter]
         well=' × '.join(f'{value:g}' for value in dimensions['well_mm'])
         envelope=' × '.join(f'{value:g}' for value in dimensions['envelope_mm'])
+        metrics={
+            'installed_net_cut_area_mm2':dimensions['installed_cut_profile_area_mm2'],
+            'estimated_metal_mass_g':dimensions['estimated_stainless_mass_g'],
+            'estimated_moving_gate_mass_g':dimensions['estimated_moving_gate_mass_g'],
+            'gross_gate_window_area_mm2':dimensions['gross_gate_window_area_mm2'],
+        }
         bom='downloads/BOM.csv' if letter=='A' else 'downloads/P4_BOM.csv'
         outer_note=(f" Outer footprint: {P4_NOMINALS['OUTER_WIDTH']:g} × {P4_NOMINALS['OUTER_LENGTH']:g} mm."
                     if letter=='C' else '')
-        concepts.append(f'<article class="concept" data-concept="{key}" data-well-mm="{well}" data-envelope-mm="{envelope}" data-gates="{dimensions["gates"]}" data-cut-plates="{dimensions["cut_plates"]}" data-pins="{dimensions["pins"]}"><div class="concept-head"><p class="number">{letter} / CURRENT CONCEPT</p><h3>{title}</h3></div><video controls playsinline preload="none" poster="{asset}.png" aria-label="{title} illustrative animation"><source src="{asset}.mp4" type="video/mp4"><a href="{asset}.mp4">Download animation</a></video><div class="concept-body"><p>{description}</p><p class="dimension-summary"><strong>{"Inner well" if letter=="C" else "Well"}:</strong> {well} mm · <strong>Full CAD envelope:</strong> {envelope} mm.{outer_note}</p><strong class="part-count">{dimensions["cut_plates"]} cut plates + {dimensions["pins"]} pins</strong><p>{note}</p><div class="concept-links"><a href="{step}" download>STEP ↓</a><a href="{glb}" download>Animated GLB ↓</a><a href="{bom}">BOM ↗</a></div></div></article>')
+        concepts.append(f'<article class="concept" data-concept="{key}" data-well-mm="{well}" data-envelope-mm="{envelope}" data-gates="{dimensions["gates"]}" data-cut-plates="{dimensions["cut_plates"]}" data-pins="{dimensions["pins"]}" data-installed-net-cut-area-mm2="{metrics["installed_net_cut_area_mm2"]:.3f}" data-estimated-metal-mass-g="{metrics["estimated_metal_mass_g"]:.3f}" data-estimated-moving-gate-mass-g="{metrics["estimated_moving_gate_mass_g"]:.3f}" data-gross-gate-window-area-mm2="{metrics["gross_gate_window_area_mm2"]:.3f}"><div class="concept-head"><p class="number">{letter} / CURRENT CONCEPT</p><h3>{title}</h3></div><video controls playsinline preload="none" poster="{asset}.png" aria-label="{title} illustrative animation"><source src="{asset}.mp4" type="video/mp4"><a href="{asset}.mp4">Download animation</a></video><div class="concept-body"><p>{description}</p><p class="dimension-summary"><strong>{"Inner well" if letter=="C" else "Well"}:</strong> {well} mm · <strong>Full CAD envelope:</strong> {envelope} mm.{outer_note}<br><strong>Installed net cut area:</strong> {metrics["installed_net_cut_area_mm2"]/100:.1f} cm² · <strong>Metal estimate:</strong> {metrics["estimated_metal_mass_g"]:.0f} g<br><strong>Moving gates:</strong> {metrics["estimated_moving_gate_mass_g"]:.0f} g · <strong>Gross window area:</strong> {metrics["gross_gate_window_area_mm2"]/100:.2f} cm²</p><strong class="part-count">{dimensions["cut_plates"]} cut plates + {dimensions["pins"]} pins</strong><p>{note}</p><div class="concept-links"><a href="{step}" download>STEP ↓</a><a href="{glb}" download>Animated GLB ↓</a><a href="{bom}">BOM ↗</a></div></div></article>')
         pan_catalog[key]={
             'letter':letter,'title':title,'well_mm':dimensions['well_mm'],
             'envelope_mm':dimensions['envelope_mm'],'gates':dimensions['gates'],
             'cut_plates':dimensions['cut_plates'],'pins':dimensions['pins'],
+            'comparison':metrics,
             'overview':f'assets/p4/{key}_pan_cutaway.png',
             'views':{stage:{'model':f'assets/p4/{key}_pan_{stage}.glb',
                             'poster':f'assets/p4/{key}_pan_{stage}.png',
@@ -318,6 +329,9 @@ def build(preview=False):
     dxfs=''.join(f'<a href="downloads/{p.name}" download>{p.stem.replace("_"," ")} ↓</a>' for p in sorted((ROOT/'DXF').glob('*.dxf')))
     now=datetime.now(timezone.utc)
     template=(SITE/'index.template.html').read_text()
+    concepts_note=('<p class="small">Comparison values come from saved CAD solids and net DXF profiles; installed cut area excludes A’s five loose mounting blanks. Mass assumes 7.9 kg/dm³ stainless and excludes weld filler; pin grade is unresolved. Window area is gross wall cutout area, not effective open area, flow capacity, or oil-control evidence.</p>')
+    template=template.replace('<div class="concept-grid">@@CONCEPTS@@</div>',
+                              '<div class="concept-grid">@@CONCEPTS@@</div>'+concepts_note)
     catalog={'schema_version':1,'candidate_sha256':identity,'default_selection':{'concept':'nested','view':'detail'},
              'concepts':pan_catalog}
     (dist/'catalog.json').write_text(json.dumps(catalog,indent=2)+'\n')

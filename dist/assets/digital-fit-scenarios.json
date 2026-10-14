@@ -1,11 +1,11 @@
 {
   "input_sha256": {
-    "concepts/p4/checks/validate.py": "34a60ad2bad905f3b0a19143511a422ec41418d3c4f1b9cd4ab3242d2fe934ae",
+    "concepts/p4/checks/validate.py": "d086713a6219612e8ef54e294ebc8ba6f08441952dafb268a6e1183076ab3ec7",
     "concepts/p4/src/advanced_geometry.py": "9a4b7eb38f95f3775750839980d982f960620f57de72868ec3380a3c38c62a44",
     "concepts/p4/src/pan_reference.py": "4f67c0306f6548545260e5a8f47fc2a711487da65fa28566eb714b66915b8a62",
     "src/parts.py": "1787cead90791e1e23a2e40fa698cd0af5e06d4b6d50020763f2dc4f4007e95b",
     "src/design_parameters.py": "1cf497227bb97e09404fb9c9e7ed8272dc2209ac37a193c56accd74dc967bccc",
-    "checks/profile_equivalence.py": "eef91e0b9ddd652e2dceb08c6254d763556af241f5f1d5489f498b84d70f6d4b",
+    "checks/profile_equivalence.py": "844d86f7408020d98cbbfcf9eff1ba1e50e224789227d2a4776bd4c5d4aa5edc",
     "STEP/solstice_baffle.step": "c8dd9266fe2493da832d34ebabe7c17c4ec6147c01a94aca87347148862d05c5",
     "concepts/p4/STEP/radial_collector.step": "b353eea18eb9b684b7a708e5dd1fd849a8949a00d645abe1d81775c800978533",
     "concepts/p4/STEP/nested_collector.step": "6659f1195493a5f0ca6f137ed6ed6abd7829dc016ae9fa8a9f400bafaa869947"
@@ -6694,6 +6694,9 @@
       "leaves": 23,
       "gates": 3,
       "labels_unique": true,
+      "modeled_metal_volume_mm3": 42537.7380238977,
+      "moving_gate_volume_mm3": 5235.747220004499,
+      "gross_gate_window_area_mm2": 1728.0,
       "positive_valid_single_solid_leaves": true,
       "fixed_leaves": 14,
       "native_closed_leaf_pairs": 253,
@@ -6725,6 +6728,9 @@
       "leaves": 38,
       "gates": 4,
       "labels_unique": true,
+      "modeled_metal_volume_mm3": 46608.37803831763,
+      "moving_gate_volume_mm3": 6980.996293339332,
+      "gross_gate_window_area_mm2": 2304.0,
       "positive_valid_single_solid_leaves": true,
       "fixed_leaves": 26,
       "native_closed_leaf_pairs": 703,
@@ -6756,6 +6762,9 @@
       "leaves": 51,
       "gates": 6,
       "labels_unique": true,
+      "modeled_metal_volume_mm3": 102944.0712477954,
+      "moving_gate_volume_mm3": 10471.494440008997,
+      "gross_gate_window_area_mm2": 3456.0,
       "positive_valid_single_solid_leaves": true,
       "fixed_leaves": 33,
       "native_closed_leaf_pairs": 1275,
@@ -7503,6 +7512,7 @@
           25.4041620915292
         ],
         "contours": 2,
+        "net_profile_area_mm2": 2156.26060250459,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "b3f4b0daa0f2db9de502b6c3a4bca0fc39a6400c34a9c1e6bd84f19fd3fc5702",
@@ -7515,6 +7525,7 @@
           23.0
         ],
         "contours": 1,
+        "net_profile_area_mm2": 3107.8336,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "bfd565c2bddf4c3980a1ff89c7ec0b6c807b1acba8406cd80513c11405580257",
@@ -7527,6 +7538,7 @@
           23.0
         ],
         "contours": 1,
+        "net_profile_area_mm2": 3567.8336,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "9310e4a1999e8d1dec544d273006b352c6932692c4879038c12d477ef0ec0e38",
@@ -7539,6 +7551,7 @@
           18.66846845044928
         ],
         "contours": 1,
+        "net_profile_area_mm2": 2559.8336,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "89d0ef921cec4848fb8dfa95bfbda5e308ef9de533a8f65c3f28abc4185d3738",
@@ -7551,6 +7564,7 @@
           5.458483754512642
         ],
         "contours": 1,
+        "net_profile_area_mm2": 5540.0,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "1346a50d099ddbacc280b9e4c312a5310a22a36144f8068ed7bbd3bc88dfbd9b",
@@ -7563,6 +7577,7 @@
           13.41025641025641
         ],
         "contours": 1,
+        "net_profile_area_mm2": 623.9999999998846,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "7a32fbcf28f95093ae6b202b8b8c768b9516be25c5bf3f4ac11bf1b4e70dc7ad",
@@ -7575,6 +7590,7 @@
           14.0
         ],
         "contours": 1,
+        "net_profile_area_mm2": 968.0,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "99b1b81b03d881e83740cc5a5bee34bb922167ec17919ac1d71163274cc46010",
@@ -7587,6 +7603,7 @@
           33.164331486677035
         ],
         "contours": 2,
+        "net_profile_area_mm2": 185.821239802369,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "d92108b3f264c53ba177d469040abe07e788a54d3bffb406a8ce89677be3e7d3",
@@ -7599,6 +7616,7 @@
           24.20016367139308
         ],
         "contours": 2,
+        "net_profile_area_mm2": 413.23534831651176,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "2f95a63477b78336ba8ffd7e9d4185318504e54fbf2a37baabbc54552585633e",
@@ -7611,6 +7629,7 @@
           23.53911082654342
         ],
         "contours": 2,
+        "net_profile_area_mm2": 9615.833599999998,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "dfc6b574e3b80e41f5fcdc46c014635a67aee520416fe23e805729481a7064ac",
@@ -7623,6 +7642,7 @@
           23.576512455516013
         ],
         "contours": 2,
+        "net_profile_area_mm2": 8992.0,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "be19db8b321e56ba87988518234e12976689b0b5ce5d754be4aa4c152576f602",
@@ -7635,6 +7655,7 @@
           21.792661051698495
         ],
         "contours": 1,
+        "net_profile_area_mm2": 9183.833599999998,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "e738592264f1f8a6f870fe5db2633cdce96b4c135e6b8b8625982deeb1e81061",
@@ -7647,6 +7668,7 @@
           5.317135549872162
         ],
         "contours": 1,
+        "net_profile_area_mm2": 7819.999999999985,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "c6e7d54dd15f00db4ae050136cddb94736cdab2e8dfb6d8b272447a7b12a6335",
@@ -7659,6 +7681,7 @@
           23.931062307609192
         ],
         "contours": 2,
+        "net_profile_area_mm2": 5567.8336,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "b52d6e6722939128547cf3ccd710fdac771030a2e4a6cff38fe375358e382962",
@@ -7671,6 +7694,7 @@
           24.04854368932039
         ],
         "contours": 2,
+        "net_profile_area_mm2": 4944.0,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "8a81237fd9d34486bafe233c2fe479aa5e2270994ce2eddf8fd229b25c1c9887",
@@ -7683,6 +7707,7 @@
           20.84105154808754
         ],
         "contours": 1,
+        "net_profile_area_mm2": 5135.8336,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "31333f3b311152f0b7447f0127f64f716452a5f18db64c1a66b7ad0b34b34f74",
@@ -7695,6 +7720,7 @@
           5.372093023255786
         ],
         "contours": 1,
+        "net_profile_area_mm2": 4300.000000000002,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "28e73eefc2857cc0395182518ac462f49833e9695bfb8d87120804aa28253ce9",
@@ -7707,6 +7733,7 @@
           0.0
         ],
         "contours": 1,
+        "net_profile_area_mm2": 408.0,
         "symmetric_difference_mm2": 0.0,
         "unmatched_boundary_mm": 0,
         "step_sha256": "f450ec3b9d979ae4aa00ebfa84f646945e980810eede4ff5316c6a3e452ac7e6",
