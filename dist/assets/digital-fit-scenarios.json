@@ -1,6 +1,6 @@
 {
   "input_sha256": {
-    "concepts/p4/checks/validate.py": "72298b1d902b03a0eeb9186859eafb1f3a78a978564b2a15a2fb9f143202737f",
+    "concepts/p4/checks/validate.py": "34a60ad2bad905f3b0a19143511a422ec41418d3c4f1b9cd4ab3242d2fe934ae",
     "concepts/p4/src/advanced_geometry.py": "9a4b7eb38f95f3775750839980d982f960620f57de72868ec3380a3c38c62a44",
     "concepts/p4/src/pan_reference.py": "4f67c0306f6548545260e5a8f47fc2a711487da65fa28566eb714b66915b8a62",
     "src/parts.py": "1787cead90791e1e23a2e40fa698cd0af5e06d4b6d50020763f2dc4f4007e95b",
@@ -5874,6 +5874,814 @@
     "sampling": "Exact BRep overlap at 1 mm translation increments; continuous motion between samples is not proven.",
     "pickup_tube_removed": "Pickup keepout and suction-tube proxy omitted together; screen separation is not modelled."
   },
+  "digital_alternative_exit_path_study": {
+    "scope": "Nominal pan proxy only; closed gates and removed cover. The pickup/tube proxy stays installed. Each declared lateral shift or tilt is attempted at installed height before vertical lift.",
+    "coordinate_frame": "Pan-proxy XYZ; not a measured vehicle frame.",
+    "shift_sampling": "1 mm increments; tilt sampling uses 1 degree increments.",
+    "continuous_motion_proven": false,
+    "paths": {
+      "shift_x_plus_20": {
+        "label": "Shift +20 mm X, then lift",
+        "mode": "shift",
+        "offset_xy_mm": [
+          20.0,
+          0.0
+        ]
+      },
+      "shift_x_minus_20": {
+        "label": "Shift \u221220 mm X, then lift",
+        "mode": "shift",
+        "offset_xy_mm": [
+          -20.0,
+          0.0
+        ]
+      },
+      "shift_y_plus_20": {
+        "label": "Shift +20 mm Y, then lift",
+        "mode": "shift",
+        "offset_xy_mm": [
+          0.0,
+          20.0
+        ]
+      },
+      "shift_y_minus_20": {
+        "label": "Shift \u221220 mm Y, then lift",
+        "mode": "shift",
+        "offset_xy_mm": [
+          0.0,
+          -20.0
+        ]
+      },
+      "tilt_x_plus_5": {
+        "label": "Tilt +5\u00b0 about X, then lift",
+        "mode": "tilt",
+        "axis_xyz": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "angle_deg": 5.0
+      },
+      "tilt_x_minus_5": {
+        "label": "Tilt \u22125\u00b0 about X, then lift",
+        "mode": "tilt",
+        "axis_xyz": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "angle_deg": -5.0
+      },
+      "tilt_y_plus_5": {
+        "label": "Tilt +5\u00b0 about Y, then lift",
+        "mode": "tilt",
+        "axis_xyz": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "angle_deg": 5.0
+      },
+      "tilt_y_minus_5": {
+        "label": "Tilt \u22125\u00b0 about Y, then lift",
+        "mode": "tilt",
+        "axis_xyz": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "angle_deg": -5.0
+      }
+    },
+    "concepts": {
+      "baseline": {
+        "shift_x_plus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift +20 mm X, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              20.0,
+              0.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 13,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "shift",
+            "offset_xy_mm": [
+              13.0,
+              0.0
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "front_tube_relief_wall",
+            "obstacle": "REFERENCE_tube_route_UNKNOWN",
+            "overlap_mm3": 6.780723711640022
+          }
+        },
+        "shift_x_minus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift \u221220 mm X, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              -20.0,
+              0.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 13,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "shift",
+            "offset_xy_mm": [
+              -13.0,
+              0.0
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "front_tube_relief_wall",
+            "obstacle": "REFERENCE_tube_route_UNKNOWN",
+            "overlap_mm3": 6.780723711639888
+          }
+        },
+        "shift_y_plus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift +20 mm Y, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              0.0,
+              20.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 27,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "lift",
+            "offset_xy_mm": [
+              0.0,
+              20.0
+            ],
+            "lift_mm": 7.0,
+            "insert_part": "front_tube_relief_wall",
+            "obstacle": "REFERENCE_tube_route_UNKNOWN",
+            "overlap_mm3": 6.780723711639842
+          }
+        },
+        "shift_y_minus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift \u221220 mm Y, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              0.0,
+              -20.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 23,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "lift",
+            "offset_xy_mm": [
+              0.0,
+              -20.0
+            ],
+            "lift_mm": 3.0,
+            "insert_part": "front_tube_relief_wall",
+            "obstacle": "REFERENCE_tube_route_UNKNOWN",
+            "overlap_mm3": 2.1794389291445415
+          }
+        },
+        "tilt_x_plus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt +5\u00b0 about X, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              1.0,
+              0.0,
+              0.0
+            ],
+            "angle_deg": 5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 3,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": 3.0,
+            "pivot_xyz_mm": [
+              0.0,
+              111.99999999999999,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "rear_wall",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 14.87089284248918
+          }
+        },
+        "tilt_x_minus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt \u22125\u00b0 about X, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              1.0,
+              0.0,
+              0.0
+            ],
+            "angle_deg": -5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 3,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": -3.0,
+            "pivot_xyz_mm": [
+              0.0,
+              111.99999999999999,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "left_wall",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 14.870892842489202
+          }
+        },
+        "tilt_y_plus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt +5\u00b0 about Y, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "angle_deg": 5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 3,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": 3.0,
+            "pivot_xyz_mm": [
+              0.0,
+              111.99999999999999,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "rear_wall",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 192.220444002949
+          }
+        },
+        "tilt_y_minus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt \u22125\u00b0 about Y, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "angle_deg": -5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 3,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": -3.0,
+            "pivot_xyz_mm": [
+              0.0,
+              111.99999999999999,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "rear_wall",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 192.22044400294865
+          }
+        }
+      },
+      "radial": {
+        "shift_x_plus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift +20 mm X, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              20.0,
+              0.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 13,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "shift",
+            "offset_xy_mm": [
+              13.0,
+              0.0
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "radial_front_relief_wall",
+            "obstacle": "REFERENCE_tube_route_UNKNOWN",
+            "overlap_mm3": 6.7807237116400305
+          }
+        },
+        "shift_x_minus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift \u221220 mm X, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              -20.0,
+              0.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 13,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "shift",
+            "offset_xy_mm": [
+              -13.0,
+              0.0
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "radial_front_relief_wall",
+            "obstacle": "REFERENCE_tube_route_UNKNOWN",
+            "overlap_mm3": 6.780723711639882
+          }
+        },
+        "shift_y_plus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift +20 mm Y, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              0.0,
+              20.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 13,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "shift",
+            "offset_xy_mm": [
+              0.0,
+              13.0
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "guide_front_left",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 22.931368920000565
+          }
+        },
+        "shift_y_minus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift \u221220 mm Y, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              0.0,
+              -20.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 27,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "lift",
+            "offset_xy_mm": [
+              0.0,
+              -20.0
+            ],
+            "lift_mm": 7.0,
+            "insert_part": "radial_front_relief_wall",
+            "obstacle": "REFERENCE_tube_route_UNKNOWN",
+            "overlap_mm3": 6.780723711639858
+          }
+        },
+        "tilt_x_plus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt +5\u00b0 about X, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              1.0,
+              0.0,
+              0.0
+            ],
+            "angle_deg": 5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 2,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": 2.0,
+            "pivot_xyz_mm": [
+              0.0,
+              112.0,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "guide_rear",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 4.554340538032299
+          }
+        },
+        "tilt_x_minus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt \u22125\u00b0 about X, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              1.0,
+              0.0,
+              0.0
+            ],
+            "angle_deg": -5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 2,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": -2.0,
+            "pivot_xyz_mm": [
+              0.0,
+              112.0,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "guide_front_left",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 9.108681076063554
+          }
+        },
+        "tilt_y_plus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt +5\u00b0 about Y, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "angle_deg": 5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 2,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": 2.0,
+            "pivot_xyz_mm": [
+              0.0,
+              112.0,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "guide_left",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 8.200235684155944
+          }
+        },
+        "tilt_y_minus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt \u22125\u00b0 about Y, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "angle_deg": -5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 2,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": -2.0,
+            "pivot_xyz_mm": [
+              0.0,
+              112.0,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "guide_right",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 8.200235684155919
+          }
+        }
+      },
+      "nested": {
+        "shift_x_plus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift +20 mm X, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              20.0,
+              0.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 13,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "shift",
+            "offset_xy_mm": [
+              13.0,
+              0.0
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "outer_open_rim",
+            "obstacle": "REFERENCE_tube_route_UNKNOWN",
+            "overlap_mm3": 11.381407597194485
+          }
+        },
+        "shift_x_minus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift \u221220 mm X, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              -20.0,
+              0.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 12,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "shift",
+            "offset_xy_mm": [
+              -12.0,
+              0.0
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "outer_right_wall",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 3.2398859221935616
+          }
+        },
+        "shift_y_plus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift +20 mm Y, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              0.0,
+              20.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 10,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "shift",
+            "offset_xy_mm": [
+              0.0,
+              10.0
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "outer_left_wall",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 4925.510352000029
+          }
+        },
+        "shift_y_minus_20": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Shift \u221220 mm Y, then lift",
+          "mode": "shift",
+          "target": {
+            "offset_xy_mm": [
+              0.0,
+              -20.0
+            ]
+          },
+          "sampling": {
+            "translation_step_mm": 1.0
+          },
+          "sampled_poses": 23,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "lift",
+            "offset_xy_mm": [
+              0.0,
+              -20.0
+            ],
+            "lift_mm": 3.0,
+            "insert_part": "inner_front_relief_wall",
+            "obstacle": "REFERENCE_tube_route_UNKNOWN",
+            "overlap_mm3": 2.1794389291445415
+          }
+        },
+        "tilt_x_plus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt +5\u00b0 about X, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              1.0,
+              0.0,
+              0.0
+            ],
+            "angle_deg": 5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 2,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": 2.0,
+            "pivot_xyz_mm": [
+              -7.105427357601002e-15,
+              111.99999999999999,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "outer_rear_wall",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 173.7525103049638
+          }
+        },
+        "tilt_x_minus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt \u22125\u00b0 about X, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              1.0,
+              0.0,
+              0.0
+            ],
+            "angle_deg": -5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 2,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": -2.0,
+            "pivot_xyz_mm": [
+              -7.105427357601002e-15,
+              111.99999999999999,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "outer_left_wall",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 173.75251030496213
+          }
+        },
+        "tilt_y_plus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt +5\u00b0 about Y, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "angle_deg": 5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 2,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": 2.0,
+            "pivot_xyz_mm": [
+              -7.105427357601002e-15,
+              111.99999999999999,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "outer_rear_wall",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 246.90754180238793
+          }
+        },
+        "tilt_y_minus_5": {
+          "status": "blocked_by_proxy_intersection",
+          "path_label": "Tilt \u22125\u00b0 about Y, then lift",
+          "mode": "tilt",
+          "target": {
+            "axis_xyz": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "angle_deg": -5.0,
+            "pivot": "insert bounding-box centre"
+          },
+          "sampling": {
+            "translation_step_mm": 1.0,
+            "rotation_step_deg": 1.0
+          },
+          "sampled_poses": 2,
+          "exit_lift_mm": 111.99,
+          "first_collision": {
+            "stage": "tilt",
+            "angle_deg": -2.0,
+            "pivot_xyz_mm": [
+              -7.105427357601002e-15,
+              111.99999999999999,
+              30.6096
+            ],
+            "lift_mm": 0.0,
+            "insert_part": "outer_rear_wall",
+            "obstacle": "REFERENCE_pan_shell_ASSUMED_INTERIOR",
+            "overlap_mm3": 246.9075418023886
+          }
+        }
+      }
+    }
+  },
   "concepts": {
     "baseline": {
       "envelope_mm": [
@@ -6682,6 +7490,7 @@
     "Installation paths use the saved closed-door pose, removed cover, fixed XY/yaw and 1 mm translation samples.",
     "Named stress cases are deliberate design sensitivities, not measured uncertainty bounds or predictions of the actual pan.",
     "Gravity torque uses uniform-density moving-solid centroids and selected effective-gravity vectors; it excludes oil forces, friction and transient response.",
+    "Alternative exit paths are eight selected nominal-proxy sensitivities; shifts/tilts start at installed height, and the first collision does not prove no other path exists.",
     "Passing proxy clearance does not establish OEM fit, oil control, thermal or fabrication clearance."
   ],
   "digital_scenario_status": "sensitivity_intersections_found",

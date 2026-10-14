@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "candidate_sha256": "1ca7de1af903d36f3d0c43a8c6fc8bc44f05f934fa6cee7305bc183220ac2187",
+  "candidate_sha256": "4451b3a2d67455d3da911f66e86fe0bbcb77654f84bd8a102d3cd2845392e75e",
   "default_selection": {
     "concept": "nested",
     "view": "detail"

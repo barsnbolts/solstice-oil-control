@@ -215,6 +215,63 @@ def validate_dist(dist, *, allow_preview=False):
             if routes[route] != (expected_status, expected_css):
                 raise ValueError(f'Site installation path disagrees with CAD report: {letter}/{route}')
 
+    alternative = fit_report.get('digital_alternative_exit_path_study', {})
+    alternative_paths = alternative.get('paths', {})
+    alternative_concepts = alternative.get('concepts', {})
+    if (len(alternative_paths) != 8 or set(alternative_concepts) != set(CURRENT)
+            or alternative.get('continuous_motion_proven') is not False):
+        raise ValueError('Saved alternative exit-path coverage or limits are incomplete')
+    if 'fit-alt-path-grid' not in fit_section.group(1):
+        raise ValueError('Alternative exit-path result cards are missing')
+    alternative_cards = {name: body for name, body in re.findall(
+        r'<article class="fit-alt-path-card" data-alt-path="([^"]+)">(.*?)</article>',
+        fit_section.group(1), re.S)}
+    if set(alternative_cards) != set(alternative_paths):
+        raise ValueError('Alternative exit-path cards disagree with saved CAD paths')
+    alternative_results = 0
+    blocked_results = 0
+    for path_name, path in alternative_paths.items():
+        card = alternative_cards[path_name]
+        heading = re.search(r'<h4>(.*?)</h4>', card, re.S)
+        if not heading or heading.group(1) != path.get('label'):
+            raise ValueError(f'Alternative exit-path title is not reader-facing: {path_name}')
+        if 'REFERENCE_' in card or re.search(r'<h4>(?:shift|tilt)_', card):
+            raise ValueError(f'Internal route identifiers are visible on the site: {path_name}')
+        outcomes = {letter: (state, css_state) for letter, state, css_state in re.findall(
+            r'<div class="fit-alt-outcome" data-alt-concept="([ABC])" '
+            r'data-alt-state="(clear|intersection)">.*?'
+            r'<strong class="fit-state (clear|intersection)">', card, re.S)}
+        if set(outcomes) != set(CURRENT.values()):
+            raise ValueError(f'Alternative exit path does not cover A/B/C: {path_name}')
+        for concept_key, letter in CURRENT.items():
+            result = alternative_concepts[concept_key].get(path_name)
+            if not result:
+                raise ValueError(f'Missing saved alternative exit result: {concept_key}/{path_name}')
+            status = result.get('status')
+            if status not in {'blocked_by_proxy_intersection', 'clear_in_sampled_exit_path'}:
+                raise ValueError(f'Invalid alternative exit status: {concept_key}/{path_name}')
+            css_state = 'intersection' if status == 'blocked_by_proxy_intersection' else 'clear'
+            if outcomes[letter] != (css_state, css_state):
+                raise ValueError(f'Site alternative exit result disagrees with CAD: {letter}/{path_name}')
+            sampling = result.get('sampling', {})
+            if (result.get('sampled_poses', 0) < 1
+                    or sampling.get('translation_step_mm') != 1.0
+                    or (path.get('mode') == 'tilt' and sampling.get('rotation_step_deg') != 1.0)):
+                raise ValueError(f'Unexpected alternative exit sampling: {concept_key}/{path_name}')
+            collision = result.get('first_collision')
+            if (status == 'clear_in_sampled_exit_path') != (collision is None):
+                raise ValueError(f'Contradictory alternative exit result: {concept_key}/{path_name}')
+            alternative_results += 1
+            blocked_results += status == 'blocked_by_proxy_intersection'
+    expected_alt_note = (f'{blocked_results} of {alternative_results} selected concept-path checks '
+                         'intersect the nominal pickup/tube or pan-shell proxy at a sampled pose. '
+                         'A clear result applies only to these discrete paths.')
+    displayed_alt_note = re.search(
+        r'<div class="fit-alt-section">.*?<p class="fit-summary">(.*?)</p>',
+        fit_section.group(1), re.S)
+    if not displayed_alt_note or displayed_alt_note.group(1) != expected_alt_note:
+        raise ValueError('Alternative exit-path summary disagrees with saved CAD results')
+
     selector = re.search(r'<select id="pan-concept">(.*?)</select>', index, re.S)
     values = set(re.findall(r'<option value="([^"]+)"', selector.group(1))) if selector else set()
     if values != set(CURRENT):
@@ -309,6 +366,8 @@ def validate_dist(dist, *, allow_preview=False):
             'installation_path_concepts': len(path_cards),
             'installation_paths': len(path_cards)*len(route_names),
             'installation_path_context_checks': len(path_context_results),
+            'alternative_exit_paths': len(alternative_paths),
+            'alternative_exit_path_checks': alternative_results,
             'gravity_gate_cases': sum(len(gates)*len(gravity_cases) for gates in gravity_concepts.values()),
             'candidate_sha256': candidate, 'zip_members': len(members),
             'current_profiles': len(current_profiles), 'download_profiles': total_profiles,

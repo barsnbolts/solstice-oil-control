@@ -10,6 +10,8 @@ assert result['status']=='passed' and result['concepts']==3 and result['views']=
 assert result['fit_scenarios']==5
 assert result['installation_path_concepts']==3 and result['installation_paths']==6
 assert result['installation_path_context_checks']==30
+assert result['alternative_exit_paths']==8
+assert result['alternative_exit_path_checks']==24
 assert result['gravity_gate_cases']==91
 version=json.loads((dist/'version.json').read_text())
 if version.get('preview'):

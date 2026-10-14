@@ -197,6 +197,10 @@ def build(preview=False):
     measurements=''.join(f'<li><span class="tag">Priority {priorities[r["item"]]} · {escape(r["status"])}</span><strong>{escape(r["item"])}</strong><p>{escape(r["method"])}</p></li>' for r in sorted(rows,key=lambda r:int(priorities[r['item']])))
     refs=''.join(f'<article class="reference" data-level="{escape(r["complexity"])}"><p class="eyebrow">{escape(r["complexity"])} / {escape(r["engine"])}</p><h3>{escape(r["name"])}</h3><p>{escape(r["mechanism"])}</p><p><strong>Construction lesson:</strong> {escape(r["lesson"])}</p><a href="{escape(r["url"],quote=True)}" target="_blank" rel="noopener">Manufacturer source ↗</a></article>' for r in references)
     outcome_labels={'baseline':'A / Simple gated well','radial':'B / Radial collector','nested':'C / Nested reservoir'}
+    def geometry_label(name):
+        if name == 'REFERENCE_tube_route_UNKNOWN':return 'tube-route proxy'
+        if name == 'REFERENCE_pan_shell_ASSUMED_INTERIOR':return 'pan-shell proxy'
+        return name.replace('_',' ')
     fit_cards=[]
     for scenario_id,scenario in fit_scenarios.items():
         outcomes=[]
@@ -236,7 +240,7 @@ def build(preview=False):
             if hit:
                 state='intersection'
                 status=f'Blocked at {hit["lift_mm"]:g} mm lift'
-                detail=f'{hit["insert_part"]} ↔ {hit["obstacle"]}'
+                detail=f'{geometry_label(hit["insert_part"])} ↔ {geometry_label(hit["obstacle"])}'
             else:
                 state='clear'
                 status='Clear in sampled path'
@@ -251,6 +255,53 @@ def build(preview=False):
                f'{sum(result["status"]!="clear_in_sampled_vertical_path" for result in retained_results)} of 15 concept-context checks. '
                f'With that proxy assembly omitted, {sum(result["status"]=="clear_in_sampled_vertical_path" for result in removed_results)} of 15 checks clear; '
                'nested C is blocked only by the narrowed-shell proxy.')
+    alternative_study=fit_report.get('digital_alternative_exit_path_study',{})
+    alternative_paths=alternative_study.get('paths',{})
+    alternative_concepts=alternative_study.get('concepts',{})
+    if len(alternative_paths)!=8 or set(alternative_concepts)!={'baseline','radial','nested'}:
+        raise ValueError('Saved CAD report lacks the complete 8-path A/B/C exit study')
+    alternative_cards=[]
+    alternative_blocked=0
+    for path_name,path in alternative_paths.items():
+        outcomes=[]
+        for key in ('baseline','radial','nested'):
+            result=alternative_concepts[key].get(path_name)
+            if not result:
+                raise ValueError(f'Missing alternative exit result: {key}/{path_name}')
+            letter={'baseline':'A','radial':'B','nested':'C'}[key]
+            hit=result.get('first_collision')
+            if hit:
+                alternative_blocked+=1
+                state='intersection'
+                status='Proxy hit'
+                if hit['stage']=='shift':
+                    x,y=hit['offset_xy_mm']
+                    position=f"shift {x:+g} / {y:+g} mm XY"
+                elif hit['stage']=='tilt':
+                    position=f"tilt {hit['angle_deg']:+g}°"
+                else:
+                    x,y=hit.get('offset_xy_mm',(0,0))
+                    position=(f"shift {x:+g} / {y:+g} mm XY" if 'offset_xy_mm' in hit
+                              else f"tilt {hit.get('angle_deg',0):+g}°")
+                    position+=f", then lift {hit['lift_mm']:g} mm"
+                detail=(f"{position}: {geometry_label(hit['insert_part'])} ↔ "
+                        f"{geometry_label(hit['obstacle'])}")
+            else:
+                state='clear'
+                status='Clear in sampled path'
+                detail=f"{result['sampled_poses']} poses; terminal lift {result['exit_lift_mm']:g} mm"
+            outcomes.append(
+                f'<div class="fit-alt-outcome" data-alt-concept="{letter}" '
+                f'data-alt-state="{state}"><span>{letter}</span>'
+                f'<strong class="fit-state {state}">{status}</strong>'
+                f'<small>{escape(detail)}</small></div>')
+        alternative_cards.append(
+            f'<article class="fit-alt-path-card" data-alt-path="{escape(path_name)}">'
+            f'<h4>{escape(path.get("label",path_name))}</h4>'
+            f'<div class="fit-alt-outcomes">{"".join(outcomes)}</div></article>')
+    alternative_summary=(f'{alternative_blocked} of {len(alternative_paths)*3} selected concept-path checks '
+                         'intersect the nominal pickup/tube or pan-shell proxy at a sampled pose. '
+                         'A clear result applies only to these discrete paths.')
     clear_all=[outcome_labels[key] for key in ('baseline','radial','nested')
                if all(scenario['concepts'][key]['status']=='clear_in_declared_proxy'
                       for scenario in fit_scenarios.values())]
@@ -284,6 +335,8 @@ def build(preview=False):
       'EDITION_STATUS':'LOCAL PREVIEW / REVIEW PENDING' if preview else 'DIGITAL REVIEW COMPLETE',
       'FIT_SCENARIOS':''.join(fit_cards),'FIT_SUMMARY':escape(fit_summary),
       'FIT_PATHS':''.join(path_cards),'FIT_PATH_NOTE':escape(path_note),
+      'ALT_EXIT_PATHS':''.join(alternative_cards),
+      'ALT_EXIT_NOTE':escape(alternative_summary),
       'SCENARIO_COUNT':str(len(fit_scenarios))}
     for key,value in values.items():template=template.replace('@@'+key+'@@',value)
     p4_dxfs=''.join(f'<a href="downloads/p4/{path.name}" download>P4 / {path.stem.replace("_"," ")} ↓</a>' for path in sorted((ROOT/'concepts/p4/DXF').glob('*.dxf')))
