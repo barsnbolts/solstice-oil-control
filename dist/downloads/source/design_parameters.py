@@ -55,6 +55,14 @@ P4_NOMINALS = {
     'DEMO_DURATION_S': 6.0,
 }
 
+# Cylindrical nose-sweep sensitivities, not a purchased or qualified heading tool.
+P5_TOOL_ACCESS = {
+    'PROBE_DIAMETERS_MM': (6.0, 9.525, 12.7),
+    'MIN_APPROACH_EXTENT_MM': 150.0,
+    'EXTERIOR_STANDOFF_MM': 10.0,
+    'DISPLAY_DIAMETER_MM': 12.7,
+}
+
 # Illustrative pan, cover, pickup and tube geometry. Only the three overall pan
 # maxima are sourced; every interior/profile/placement value is a proxy input.
 P4_PAN_PROXY = {
@@ -298,6 +306,13 @@ def parameter_register_rows():
             rows.append(dict(zip(REGISTER_FIELDS, (key, _register_value(value), unit, datum,
                                                    source, uncertainty, status))))
     lower_gap = P4_PAN_PROXY['CAGE_ORIGIN_XYZ'][2] - P4_PAN_PROXY['PAN_FLOOR_Z']
+    for name, value in P5_TOOL_ACCESS.items():
+        rows.append(dict(zip(REGISTER_FIELDS, (
+            'TOOL_ACCESS_'+name, _register_value(value), 'mm',
+            'Saved captive-pin outer face; approach outward along its signed axis',
+            f'src/design_parameters.py:P5_TOOL_ACCESS[{name}]; research/pin-tool-access.md',
+            'Cylindrical nose sweep only; actual heading die, body, jaws and forming process unknown',
+            'DESIGN_TOOL_ENVELOPE_ASSUMPTION'))))
     rows.append(dict(zip(REGISTER_FIELDS, (
         'PAN_PROXY_DERIVED_LOWER_WALL_TO_FLOOR_GAP', _register_value(lower_gap), 'mm',
         'Pan-proxy Z frame; insert lower wall relative to assumed floor',

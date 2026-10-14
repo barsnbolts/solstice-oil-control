@@ -329,6 +329,75 @@ def validate_dist(dist, *, allow_preview=False):
     if not displayed_alt_note or displayed_alt_note.group(1) != expected_alt_note:
         raise ValueError('Alternative exit-path summary disagrees with saved CAD results')
 
+    tool = fit_report.get('pin_tool_access', {})
+    tool_contexts = {'isolated_hinge_before_wall_attachment', 'isolated_wall_gate_module',
+                     'completed_insert_on_bench', 'installed_proxy_cover_removed'}
+    tool_diameters = [6.0, 9.525, 12.7]
+    if (set(tool.get('contexts', {})) != tool_contexts
+            or tool.get('probe_diameters_mm') != tool_diameters
+            or set(tool.get('concepts', {})) != set(CURRENT)
+            or tool.get('minimum_approach_extent_mm') != 150
+            or tool.get('exterior_standoff_mm') != 10):
+        raise ValueError('Incomplete declared pin-tool access coverage')
+    access_section = re.search(r'<section id="access" class="section">(.*?)</section>', index, re.S)
+    if not access_section:
+        raise ValueError('Pin-tool access section is missing')
+    access_cards = dict(re.findall(r'<article class="fit-path-card" data-access-concept="([ABC])">'
+                                  r'(.*?)</article>', access_section.group(1), re.S))
+    if set(access_cards) != set(CURRENT.values()):
+        raise ValueError('Pin-tool access cards do not cover A/B/C')
+    tool_rows = tool_checks = 0
+    for key, letter in CURRENT.items():
+        result = tool['concepts'][key]
+        rows = result.get('results', [])
+        expected = {(gate, end, diameter) for gate in gravity_concepts[key]
+                    for end in ('minus', 'plus') for diameter in tool_diameters}
+        identities = [(row.get('gate'), row.get('end'), row.get('diameter_mm')) for row in rows]
+        if len(identities) != len(expected) or set(identities) != expected:
+            raise ValueError(f'Incomplete or duplicate pin-tool rows: {key}')
+        card = access_cards[letter]
+        for asset in (f'assets/p4/{key}_pin_access_top.png', f'downloads/p4/{key}_pin_access.step'):
+            if not any(urlsplit(url).path == asset for url in re.findall(r'(?:href|src)="([^"]+)"', card)):
+                raise ValueError(f'Missing representative pin-tool asset: {asset}')
+        displayed = {(context, float(diameter)): (int(clear), int(total))
+            for context, diameter, clear, total in re.findall(
+                r'<td data-access-context="([^"]+)" data-access-diameter="([^"]+)">(\d+)/(\d+)</td>', card)}
+        if set(displayed) != {(context, d) for context in tool_contexts for d in tool_diameters}:
+            raise ValueError(f'Incomplete pin-tool table: {key}')
+        for row in rows:
+            if set(row.get('contexts', {})) != tool_contexts:
+                raise ValueError(f'Incomplete pin-tool stage results: {key}')
+            for context, outcome in row['contexts'].items():
+                status = outcome.get('status')
+                hits = outcome.get('intersections')
+                if (status not in {'blocked', 'clear_in_declared_envelope'} or not isinstance(hits, list)
+                        or (status == 'blocked') != bool(hits)):
+                    raise ValueError(f'Contradictory pin-tool access result: {key}/{context}')
+                if any(not hit.get('obstacle') or not math.isfinite(hit.get('overlap_mm3', 0))
+                       or hit.get('overlap_mm3', 0) <= 0 for hit in hits):
+                    raise ValueError('Invalid pin-tool intersection evidence')
+                axis, contact = outcome.get('outward_axis_xyz', []), outcome.get('contact_xyz_mm', [])
+                if (len(axis) != 3 or len(contact) != 3
+                        or not all(math.isfinite(v) for v in (*axis, *contact))
+                        or abs(sum(v*v for v in axis)-1) > 1e-9
+                        or not math.isfinite(outcome.get('swept_extent_mm', 0))
+                        or outcome.get('swept_extent_mm', 0) < 150):
+                    raise ValueError('Invalid pin-tool contact, axis or approach extent')
+                tool_checks += 1
+        for context in tool_contexts:
+            for diameter in tool_diameters:
+                selected = [row for row in rows if row['diameter_mm'] == diameter]
+                clear = sum(row['contexts'][context]['status'] == 'clear_in_declared_envelope'
+                            for row in selected)
+                cell = result['summary'][context][str(diameter)]
+                if (cell != {'clear_pin_ends': clear, 'blocked_pin_ends': len(selected)-clear,
+                             'total_pin_ends': len(selected)}
+                        or displayed[(context, diameter)] != (clear, len(selected))):
+                    raise ValueError(f'Pin-tool summary disagrees with exact results: {key}/{context}')
+        tool_rows += len(rows)
+    if f'data-tool-access-checks="{tool_checks}"' not in access_section.group(1):
+        raise ValueError('Pin-tool displayed coverage count disagrees with saved CAD')
+
     selector = re.search(r'<select id="pan-concept">(.*?)</select>', index, re.S)
     values = set(re.findall(r'<option value="([^"]+)"', selector.group(1))) if selector else set()
     if values != set(CURRENT):
@@ -443,6 +512,7 @@ def validate_dist(dist, *, allow_preview=False):
             'alternative_exit_paths': len(alternative_paths),
             'alternative_exit_path_checks': alternative_results,
             'gravity_gate_cases': sum(len(gates)*len(gravity_cases) for gates in gravity_concepts.values()),
+            'tool_access_rows': tool_rows, 'tool_access_checks': tool_checks,
             'candidate_sha256': candidate, 'zip_members': len(members),
             'current_profiles': len(current_profiles), 'download_profiles': total_profiles,
             'download_profile_paths': len(dxf_members)}

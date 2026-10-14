@@ -18,6 +18,7 @@ DOCS=['delivery/README.md','delivery/NEXT_DECISIONS.md','delivery/INTERFACE_ASSE
       'delivery/TOLERANCE_BUDGET.md','delivery/SENDCUTSEND_PREFLIGHT.md','QUALITY.md',
       'research/exact-interface-followup.md','research/honda-precedents.md',
       'research/same-pan-family-visuals.md',
+      'research/pin-tool-access.md','review/pin-tool-access-assessment.md',
       'review/digital-fit-scenario-assessment.md','concepts/p4/CONCEPTS.md','concepts/p4/PAN_CONTEXT.md']
 MODELS=['v1_fixed_dividers','v2_purchased_doors','solstice_baffle']
 SCENARIOS=('nominal_visual_proxy','cover_12mm_lower_stress',
@@ -390,6 +391,38 @@ def build(preview=False):
     alternative_summary=(f'{alternative_blocked} of {len(alternative_paths)*3} selected concept-path checks '
                          'intersect the nominal pickup/tube or pan-shell proxy at a sampled pose. '
                          'A clear result applies only to these discrete paths.')
+    access=fit_report['pin_tool_access']
+    access_labels={'isolated_hinge_before_wall_attachment':'Hinge only, before wall',
+                   'isolated_wall_gate_module':'Wall / gate module',
+                   'completed_insert_on_bench':'Complete cage on bench',
+                   'installed_proxy_cover_removed':'Nominal pan, cover removed'}
+    access_titles={'baseline':'A · Simple gated well','radial':'B · Radial collector',
+                   'nested':'C · Nested reservoir'}
+    access_gates={'baseline':'rear pin','radial':'front-right pin','nested':'inner rear pin'}
+    access_cards=[]
+    access_checks=sum(len(row['contexts']) for result in access['concepts'].values()
+                      for row in result['results'])
+    for key,letter in (('baseline','A'),('radial','B'),('nested','C')):
+        summary=access['concepts'][key]['summary']
+        access_rows=[]
+        for context,label in access_labels.items():
+            cells=[]
+            for diameter in access['probe_diameters_mm']:
+                cell=summary[context][str(diameter)]
+                cells.append(f'<td data-access-context="{context}" data-access-diameter="{diameter:g}">'
+                             f'{cell["clear_pin_ends"]}/{cell["total_pin_ends"]}</td>')
+            access_rows.append(f'<tr><th scope="row">{label}</th>{"".join(cells)}</tr>')
+        headings=''.join(f'<th scope="col">Ø{diameter:g}<br>mm</th>'
+                         for diameter in access['probe_diameters_mm'])
+        access_cards.append(f'<article class="fit-path-card" data-access-concept="{letter}">'
+            f'<h3>{access_titles[key]}</h3><img src="assets/p4/{key}_pin_access_top.png" '
+            f'width="1000" height="1000" loading="lazy" '
+            f'alt="Top view of {access_titles[key]} with two assumed 12.7 mm coaxial approach cylinders at its {access_gates[key]}">'
+            f'<p class="small">Amber: representative Ø12.7 mm nose sweeps at the {access_gates[key]}. '
+            'The table covers every gate end.</p><table class="access-table">'
+            f'<caption>Clear pin ends / tested ends</caption><thead><tr><th scope="col">Stage</th>{headings}'
+            f'</tr></thead><tbody>{"".join(access_rows)}</tbody></table>'
+            f'<a class="text-link" href="downloads/p4/{key}_pin_access.step" download>Download access scene (STEP) ↓</a></article>')
     clear_all=[outcome_labels[key] for key in ('baseline','radial','nested')
                if all(scenario['concepts'][key]['status']=='clear_in_declared_proxy'
                       for scenario in fit_scenarios.values())]
@@ -429,6 +462,7 @@ def build(preview=False):
       'FIT_PATHS':''.join(path_cards),'FIT_PATH_NOTE':escape(path_note),
       'ALT_EXIT_PATHS':''.join(alternative_cards),
       'ALT_EXIT_NOTE':escape(alternative_summary),
+      'TOOL_ACCESS_CARDS':''.join(access_cards),'TOOL_ACCESS_CHECKS':str(access_checks),
       'SCENARIO_COUNT':str(len(fit_scenarios))}
     for key,value in values.items():template=template.replace('@@'+key+'@@',value)
     p4_dxfs=''.join(f'<a href="downloads/p4/{path.name}" download>P4 / {path.stem.replace("_"," ")} ↓</a>' for path in sorted((ROOT/'concepts/p4/DXF').glob('*.dxf')))
