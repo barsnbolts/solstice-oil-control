@@ -54,7 +54,26 @@ def is_captive_pin(value):
     return normalized in {'captivepin', 'captivepivotpin'}
 
 
-def validate_dist(dist):
+def edition_identity(dist, edition=None):
+    dist = Path(dist)
+    if edition is None and (dist/'version.json').is_file():
+        edition = json.loads((dist/'version.json').read_text()).get('edition')
+    content_hashes = ''
+    for path in sorted(dist.rglob('*')):
+        if not path.is_file() or path.name == 'version.json':
+            continue
+        data = path.read_bytes()
+        if edition and path.suffix == '.html':
+            text = data.decode('utf-8')
+            text = text.replace(f'<meta name="project-edition" content="{edition}">',
+                                '<meta name="project-edition" content="@@EDITION@@">')
+            text = text.replace(f'?v={edition}', '').replace(f'&amp;v={edition}', '')
+            data = text.encode('utf-8')
+        content_hashes += hashlib.sha256(data).hexdigest()
+    return hashlib.sha256(content_hashes.encode()).hexdigest()[:16]
+
+
+def validate_dist(dist, *, allow_preview=False):
     dist = Path(dist).resolve()
     page = dist/'index.html'
     if not page.is_file():
@@ -75,14 +94,126 @@ def validate_dist(dist):
     index = page.read_text(encoding='utf-8')
     version = json.loads((dist/'version.json').read_text())
     catalog = json.loads((dist/'catalog.json').read_text())
+    preview = version.get('preview', False)
+    if preview and not allow_preview:
+        raise ValueError('Local preview editions cannot pass the public bundle check')
+    status_text = 'LOCAL PREVIEW / REVIEW PENDING' if preview else 'DIGITAL REVIEW COMPLETE'
+    if status_text not in index:
+        raise ValueError('Page status does not match the bundle review state')
     edition_match = re.search(r'<meta name="project-edition" content="([^"]+)"', index)
     if not edition_match or edition_match.group(1) != version.get('edition'):
         raise ValueError('Page edition does not match version.json')
+    actual_edition = edition_identity(dist, version.get('edition'))
+    if actual_edition != version.get('edition'):
+        raise ValueError('Site files changed after the edition was built')
     candidate = version.get('candidate_sha256')
     if not re.fullmatch(r'[0-9a-f]{64}', candidate or '') or catalog.get('candidate_sha256') != candidate:
         raise ValueError('Catalog and published version do not bind the same candidate')
     if catalog.get('schema_version') != 1 or set(catalog.get('concepts', {})) != set(CURRENT):
         raise ValueError('Unexpected current-concept catalog')
+
+    fit_report = json.loads((dist/'assets/digital-fit-scenarios.json').read_text())
+    scenarios = fit_report.get('digital_fit_scenarios', {})
+    fit_section = re.search(r'<section id="fitment" class="section">(.*?)</section>', index, re.S)
+    if not fit_section or not scenarios:
+        raise ValueError('Digital fit scenario section or data is missing')
+    scenario_cards = {name: body for name, body in re.findall(
+        r'<article class="fit-scenario" data-scenario="([^"]+)">(.*?)</article>',
+        fit_section.group(1), re.S)}
+    if set(scenario_cards) != set(scenarios):
+        raise ValueError('Digital fit scenario cards disagree with the saved geometry report')
+    for name, scenario in scenarios.items():
+        card = scenario_cards[name]
+        outcomes = {letter: (state, label) for letter, state, label in re.findall(
+            r'<div class="fit-outcome" data-fit-concept="([ABC])">.*?'
+            r'<span class="fit-state (clear|intersection)">([^<]+)</span>', card, re.S)}
+        if set(outcomes) != {'A', 'B', 'C'}:
+            raise ValueError(f'Incomplete fit outcomes on site: {name}')
+        for concept_key, letter in CURRENT.items():
+            expected = scenario['concepts'][concept_key]['status']
+            state = 'clear' if expected == 'clear_in_declared_proxy' else 'intersection'
+            if outcomes[letter][0] != state:
+                raise ValueError(f'Site fit status disagrees with CAD report: {name}/{letter}')
+
+    nominal = scenarios.get('nominal_visual_proxy', {}).get('concepts', {})
+    path_section = re.search(r'<div class="fit-path-grid">(.*?)</div></section>', index, re.S)
+    if not path_section or set(nominal) != set(CURRENT):
+        raise ValueError('Digital installation-path section or nominal results are missing')
+    path_cards = {letter: body for letter, body in re.findall(
+        r'<article class="fit-path-card" data-path-concept="([ABC])">(.*?)</article>',
+        path_section.group(1), re.S)}
+    if set(path_cards) != set(CURRENT.values()):
+        raise ValueError('Installation-path cards do not cover A/B/C')
+    route_names = {'pickup_tube_retained', 'pickup_tube_removed_as_assembly'}
+    path_context_results = []
+    for scenario in scenarios.values():
+        for concept_key in CURRENT:
+            routes = scenario['concepts'][concept_key].get('installation_paths', {})
+            if set(routes) != route_names:
+                raise ValueError(f'Incomplete saved installation-path results: {concept_key}')
+            for route, result in routes.items():
+                if result.get('sample_step_mm') != 1.0 or result.get('sampled_poses', 0) < 1:
+                    raise ValueError(f'Unexpected installation-path sampling: {concept_key}/{route}')
+                clear = result.get('status') == 'clear_in_sampled_vertical_path'
+                if clear != (result.get('first_collision') is None):
+                    raise ValueError(f'Contradictory installation-path result: {concept_key}/{route}')
+                path_context_results.append((route, clear))
+    retained_total = sum(route == 'pickup_tube_retained' for route, _ in path_context_results)
+    retained_blocked = sum(route == 'pickup_tube_retained' and not clear
+                           for route, clear in path_context_results)
+    removed_total = sum(route == 'pickup_tube_removed_as_assembly'
+                        for route, _ in path_context_results)
+    removed_clear = sum(route == 'pickup_tube_removed_as_assembly' and clear
+                        for route, clear in path_context_results)
+    path_note = (f'Across five contexts, the retained pickup/tube route is blocked in '
+                 f'{retained_blocked} of {retained_total} concept-context checks. '
+                 f'With that proxy assembly omitted, {removed_clear} of {removed_total} checks clear; '
+                 'nested C is blocked only by the narrowed-shell proxy.')
+    displayed_note = re.search(
+        r'<div class="fit-path-section">.*?<p class="fit-summary">(.*?)</p>',
+        fit_section.group(1), re.S)
+    if not displayed_note or displayed_note.group(1) != path_note:
+        raise ValueError('Installation-path summary disagrees with saved scenario results')
+    gravity = fit_report.get('gravity_torque_study', {})
+    gravity_cases = gravity.get('gravity_vectors_m_s2', {})
+    gravity_concepts = gravity.get('concepts', {})
+    if (len(gravity_cases) != 7 or set(gravity_concepts) != set(CURRENT)
+            or gravity.get('angle_samples_deg') != fit_report.get('sample_angles_deg')):
+        raise ValueError('Saved gravity-torque coverage is incomplete')
+    for case, vector in gravity_cases.items():
+        if abs(sum(value*value for value in vector)**0.5 - 9.80665) > 1e-6:
+            raise ValueError(f'Invalid effective-gravity vector: {case}')
+    gate_counts = {'baseline': 3, 'radial': 4, 'nested': 6}
+    for concept_key, gates in gravity_concepts.items():
+        if len(gates) != gate_counts[concept_key]:
+            raise ValueError(f'Wrong gate count in gravity-torque report: {concept_key}')
+        for gate, results in gates.items():
+            if set(results) != set(gravity_cases):
+                raise ValueError(f'Incomplete gravity cases: {concept_key}/{gate}')
+            for case, result in results.items():
+                curve = result.get('curve', [])
+                if [row.get('angle_deg') for row in curve] != gravity['angle_samples_deg']:
+                    raise ValueError(f'Incomplete gravity angle curve: {concept_key}/{gate}/{case}')
+                closed = curve[0]['torque_Nm_per_kg']
+                bias = 'opens' if closed > 1e-9 else 'closes' if closed < -1e-9 else 'neutral'
+                if result.get('closed_bias') != bias:
+                    raise ValueError(f'Gravity bias disagrees with torque sign: {concept_key}/{gate}/{case}')
+    if any(gate['level']['closed_bias'] != 'closes'
+           for gates in gravity_concepts.values() for gate in gates.values()):
+        raise ValueError('Level gravity result does not match the saved gate geometry')
+    for concept_key, letter in CURRENT.items():
+        routes = {route: (state, css_state) for route, state, css_state in re.findall(
+            r'<div class="fit-route-row" data-fit-route="([^"]+)" '
+            r'data-route-state="([^"]+)">.*?<strong class="fit-state (clear|intersection)">',
+            path_cards[letter], re.S)}
+        expected = nominal[concept_key].get('installation_paths', {})
+        if set(routes) != route_names or set(expected) != route_names:
+            raise ValueError(f'Incomplete installation-path routes on site: {letter}')
+        for route in route_names:
+            expected_status = expected[route]['status']
+            expected_css = 'clear' if expected_status == 'clear_in_sampled_vertical_path' else 'intersection'
+            if routes[route] != (expected_status, expected_css):
+                raise ValueError(f'Site installation path disagrees with CAD report: {letter}/{route}')
 
     selector = re.search(r'<select id="pan-concept">(.*?)</select>', index, re.S)
     values = set(re.findall(r'<option value="([^"]+)"', selector.group(1))) if selector else set()
@@ -174,6 +305,11 @@ def validate_dist(dist):
         if any(name.startswith(('review/', 'history/', 'research/')) for name in members):
             raise ValueError('Private review/history/research files entered the public ZIP')
     return {'status': 'passed', 'concepts': len(CURRENT), 'views': len(CURRENT)*len(VIEWS),
+            'fit_scenarios': len(scenarios),
+            'installation_path_concepts': len(path_cards),
+            'installation_paths': len(path_cards)*len(route_names),
+            'installation_path_context_checks': len(path_context_results),
+            'gravity_gate_cases': sum(len(gates)*len(gravity_cases) for gates in gravity_concepts.values()),
             'candidate_sha256': candidate, 'zip_members': len(members),
             'current_profiles': len(current_profiles), 'download_profiles': total_profiles,
             'download_profile_paths': len(dxf_members)}

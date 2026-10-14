@@ -16,8 +16,13 @@ from design_parameters import P4_NOMINALS,P4_PAN_PROXY
 DOCS=['delivery/README.md','delivery/NEXT_DECISIONS.md','delivery/INTERFACE_ASSESSMENT.md',
       'delivery/TOLERANCE_SENSITIVITY.md','delivery/COUPON_PLAN.md','delivery/CURRENT_DIMENSIONS.md',
       'delivery/TOLERANCE_BUDGET.md','delivery/SENDCUTSEND_PREFLIGHT.md','QUALITY.md',
-      'research/exact-interface-followup.md','concepts/p4/CONCEPTS.md','concepts/p4/PAN_CONTEXT.md']
+      'research/exact-interface-followup.md','research/honda-precedents.md',
+      'research/same-pan-family-visuals.md',
+      'review/digital-fit-scenario-assessment.md','concepts/p4/CONCEPTS.md','concepts/p4/PAN_CONTEXT.md']
 MODELS=['v1_fixed_dividers','v2_purchased_doors','solstice_baffle']
+SCENARIOS=('nominal_visual_proxy','cover_12mm_lower_stress',
+           'pickup_and_tube_25pct_larger_stress','pickup_route_offset_stress',
+           'narrower_shell_stress')
 
 
 def build(preview=False):
@@ -25,6 +30,13 @@ def build(preview=False):
     identity=sha(ROOT/'review/candidate.json')
     approval=json.loads((ROOT/'review/retro-fix-approval.json').read_text())
     report=json.loads((ROOT/'review/delivery-validation.json').read_text())
+    fit_report=json.loads((ROOT/'concepts/p4/review/validation.json').read_text())
+    fit_scenarios=fit_report.get('digital_fit_scenarios',{})
+    if tuple(fit_scenarios)!=SCENARIOS:
+        raise ValueError('Saved CAD report has an unexpected digital-fit scenario set')
+    for name,scenario in fit_scenarios.items():
+        if set(scenario.get('concepts',{}))!={'baseline','radial','nested'}:
+            raise ValueError(f'Incomplete A/B/C fit results: {name}')
     if not preview and (approval.get('status')!='accepted' or approval.get('candidate_sha256')!=identity or report.get('candidate_sha256')!=identity):
         raise ValueError('Publish only an accepted, packaged project candidate')
     dist=Path(tempfile.mkdtemp(prefix='.site-build-',dir=SITE))
@@ -54,10 +66,13 @@ def build(preview=False):
                 target=f'downloads/p4/{"source/" if folder=="src" else ""}{path.name}'
                 copy(str(path.relative_to(ROOT)),target)
     copy('concepts/p4/BOM.csv','downloads/P4_BOM.csv')
+    copy('concepts/p4/review/validation.json','assets/digital-fit-scenarios.json')
     p4_render=json.loads((ROOT/'concepts/p4/review/render-receipt.json').read_text())
     for job in p4_render['jobs'].values():
         for source in job['outputs']:copy(source,'assets/p4/'+Path(source).name)
     copy('research/oil-pan-evidence/gm-pan-alt1.jpg','assets/gm-pan-interior.jpg')
+    copy('research/pan-family-illustrations/same-pan-interior.gif','assets/gm-pan-family-inspection.gif')
+    copy('research/pan-family-illustrations/same-pan-assembly.gif','assets/gm-pan-family-assembly.gif')
     for source in (SITE/'vendor').iterdir():
         if source.is_file():shutil.copy2(source,dist/'assets'/source.name)
 
@@ -181,7 +196,73 @@ def build(preview=False):
         }
     measurements=''.join(f'<li><span class="tag">Priority {priorities[r["item"]]} · {escape(r["status"])}</span><strong>{escape(r["item"])}</strong><p>{escape(r["method"])}</p></li>' for r in sorted(rows,key=lambda r:int(priorities[r['item']])))
     refs=''.join(f'<article class="reference" data-level="{escape(r["complexity"])}"><p class="eyebrow">{escape(r["complexity"])} / {escape(r["engine"])}</p><h3>{escape(r["name"])}</h3><p>{escape(r["mechanism"])}</p><p><strong>Construction lesson:</strong> {escape(r["lesson"])}</p><a href="{escape(r["url"],quote=True)}" target="_blank" rel="noopener">Manufacturer source ↗</a></article>' for r in references)
-    resources=[('CONCEPTS','Creative gated designs','New radial and nested architectures, cut quantities and tradeoffs.'),('PAN_CONTEXT','Pan assumptions','Which dimensions are sourced and which are design test cases.'),('NEXT_DECISIONS','Measurement & bench plan','What to measure first, and which decision it unlocks.'),('INTERFACE_ASSESSMENT','Evidence & uncertainty','Exact-pan sources, supported identities and hidden fit gaps.'),('TOLERANCE_SENSITIVITY','Tolerance sensitivity','Reproducible conditional budgets for the hinge and mounting stack.'),('README','Fabrication & fit notes','Stock, quantities, assembly intent and unresolved release holds.'),('SENDCUTSEND_PREFLIGHT','SendCutSend preparation','Cut-file review and supplier/process boundaries.'),('QUALITY','Design & production standards','The project criteria for each development stage.')]
+    outcome_labels={'baseline':'A / Simple gated well','radial':'B / Radial collector','nested':'C / Nested reservoir'}
+    fit_cards=[]
+    for scenario_id,scenario in fit_scenarios.items():
+        outcomes=[]
+        for key in ('baseline','radial','nested'):
+            result=scenario['concepts'][key]
+            letter={'baseline':'A','radial':'B','nested':'C'}[key]
+            if not result['collisions']:
+                detail='No exact Boolean intersection at the checked poses.'
+                status='Clear in modeled context'
+                state='clear'
+            else:
+                groups=[]
+                for collision in result['collisions']:
+                    poses=collision['sampled_poses']
+                    degrees=sorted({pose[key_name] for pose in poses
+                                    for key_name in pose if pose[key_name] is not None})
+                    suffix=(f" at {', '.join(f'{angle:g}°' for angle in degrees)}"
+                            if degrees else '')
+                    groups.append(f"{collision['first']} ↔ {collision['second']}{suffix}")
+                detail=f"{sum(item['pose_count'] for item in result['collisions'])} sampled intersections: {'; '.join(groups)}"
+                status='Intersection found'
+                state='intersection'
+            extra=(f'<details class="fit-collision-detail"><summary>See intersecting parts and poses</summary><p>{escape(detail)}</p></details>'
+                   if result['collisions'] else f'<p>{escape(detail)}</p>')
+            outcomes.append(f'<div class="fit-outcome" data-fit-concept="{letter}"><strong>{outcome_labels[key]}</strong><span class="fit-state {state}">{status}</span>{extra}</div>')
+        fit_cards.append(f'<article class="fit-scenario" data-scenario="{escape(scenario_id)}"><h3>{escape(scenario["label"])}</h3><p>{escape(scenario["description"])}</p><div class="fit-outcomes">{"".join(outcomes)}</div></article>')
+    path_cards=[]
+    for key in ('baseline','radial','nested'):
+        letter={'baseline':'A','radial':'B','nested':'C'}[key]
+        title={'baseline':'Simple gated well','radial':'Radial collector','nested':'Nested reservoir'}[key]
+        paths=fit_scenarios['nominal_visual_proxy']['concepts'][key]['installation_paths']
+        route_rows=[]
+        for route,label in (('pickup_tube_retained','Pickup/tube proxy retained'),
+                            ('pickup_tube_removed_as_assembly','Pickup/tube proxy omitted')):
+            result=paths[route]
+            hit=result.get('first_collision')
+            if hit:
+                state='intersection'
+                status=f'Blocked at {hit["lift_mm"]:g} mm lift'
+                detail=f'{hit["insert_part"]} ↔ {hit["obstacle"]}'
+            else:
+                state='clear'
+                status='Clear in sampled path'
+                detail=f'{result["sampled_poses"]} poses at {result["sample_step_mm"]:g} mm steps'
+            route_rows.append(f'<div class="fit-route-row" data-fit-route="{route}" data-route-state="{result["status"]}"><span>{label}</span><strong class="fit-state {state}">{escape(status)}</strong><small>{escape(detail)}</small></div>')
+        path_cards.append(f'<article class="fit-path-card" data-path-concept="{letter}"><h3>{letter} · {title}</h3>{"".join(route_rows)}</article>')
+    removed_results=[scenario['concepts'][key]['installation_paths']['pickup_tube_removed_as_assembly']
+                     for scenario in fit_scenarios.values() for key in ('baseline','radial','nested')]
+    retained_results=[scenario['concepts'][key]['installation_paths']['pickup_tube_retained']
+                      for scenario in fit_scenarios.values() for key in ('baseline','radial','nested')]
+    path_note=(f'Across five contexts, the retained pickup/tube route is blocked in '
+               f'{sum(result["status"]!="clear_in_sampled_vertical_path" for result in retained_results)} of 15 concept-context checks. '
+               f'With that proxy assembly omitted, {sum(result["status"]=="clear_in_sampled_vertical_path" for result in removed_results)} of 15 checks clear; '
+               'nested C is blocked only by the narrowed-shell proxy.')
+    clear_all=[outcome_labels[key] for key in ('baseline','radial','nested')
+               if all(scenario['concepts'][key]['status']=='clear_in_declared_proxy'
+                      for scenario in fit_scenarios.values())]
+    sensitive=[outcome_labels[key] for key in ('baseline','radial','nested')
+               if any(scenario['concepts'][key]['collisions'] for name,scenario in fit_scenarios.items()
+                      if name!='nominal_visual_proxy')]
+    clear_text=', '.join(clear_all) if clear_all else 'None'
+    sensitive_text=', '.join(sensitive) if sensitive else 'None'
+    fit_summary=(f'{clear_text} has no exact intersections in all {len(fit_scenarios)} declared contexts. '
+                 f'{sensitive_text} shows intersections in one or more deliberate stress cases. '
+                 'These cases are not measured bounds or predictions of the actual pan.')
+    resources=[('CONCEPTS','Creative gated designs','New radial and nested architectures, cut quantities and tradeoffs.'),('PAN_CONTEXT','Pan assumptions','Which dimensions are sourced and which are design test cases.'),('NEXT_DECISIONS','Digital fitment plan','Current scenario work and the next digital checks.'),('INTERFACE_ASSESSMENT','Evidence & uncertainty','Exact-pan sources, supported identities and hidden fit gaps.'),('same-pan-family-visuals','Same-part GM pan views','Unscaled service drawings for qualitative topology only.'),('TOLERANCE_SENSITIVITY','Tolerance sensitivity','Reproducible conditional budgets for the hinge and mounting stack.'),('README','Fabrication & fit notes','Stock, quantities, assembly intent and unresolved release holds.'),('SENDCUTSEND_PREFLIGHT','SendCutSend preparation','Cut-file review and supplier/process boundaries.'),('QUALITY','Design & production standards','The project criteria for each development stage.'),('honda-precedents','Honda precedents','OEM, aftermarket, catalog and patent architecture notes.')]
     cards=''.join(f'<a class="resource" href="notes/{name}.html"><h3>{title} ↗</h3><p>{description}</p></a>' for name,title,description in resources)
     dxfs=''.join(f'<a href="downloads/{p.name}" download>{p.stem.replace("_"," ")} ↓</a>' for p in sorted((ROOT/'DXF').glob('*.dxf')))
     now=datetime.now(timezone.utc)
@@ -199,8 +280,11 @@ def build(preview=False):
       'PROXY_FLOOR_GAP':f"{facts['proxy_floor_gap_mm']:g}",
       'CHEEK':f'{tolerance["cheek_gap"]["thickness_only_range_mm"][0]:.4f}',
       'ROOF':f'{tolerance["continuous_roof"]["gap_mm"]:.3f}',
-      'STACK':f'{tolerance["mounting_stack"]["conditional_added_SST048_sheet_cases"][0]["nominal_insertion_loss_mm"]:.4f}'}
-    if preview:template=template.replace('DIGITAL REVIEW COMPLETE','LOCAL PREVIEW / REVIEW PENDING')
+      'STACK':f'{tolerance["mounting_stack"]["conditional_added_SST048_sheet_cases"][0]["nominal_insertion_loss_mm"]:.4f}',
+      'EDITION_STATUS':'LOCAL PREVIEW / REVIEW PENDING' if preview else 'DIGITAL REVIEW COMPLETE',
+      'FIT_SCENARIOS':''.join(fit_cards),'FIT_SUMMARY':escape(fit_summary),
+      'FIT_PATHS':''.join(path_cards),'FIT_PATH_NOTE':escape(path_note),
+      'SCENARIO_COUNT':str(len(fit_scenarios))}
     for key,value in values.items():template=template.replace('@@'+key+'@@',value)
     p4_dxfs=''.join(f'<a href="downloads/p4/{path.name}" download>P4 / {path.stem.replace("_"," ")} ↓</a>' for path in sorted((ROOT/'concepts/p4/DXF').glob('*.dxf')))
     template=template.replace('@@P4_DXFS@@',p4_dxfs)
@@ -222,8 +306,9 @@ def build(preview=False):
     for page in dist.rglob('*.html'):
         html=page.read_text().replace('@@EDITION@@',edition)
         page.write_text(re.sub(r'(href|src|poster)="([^"]+)"',version_link,html))
-    (dist/'version.json').write_text(json.dumps({'edition':edition,'updated_at':now.isoformat(),'candidate_sha256':identity})+'\n')
-    validate(dist)
+    (dist/'version.json').write_text(json.dumps({'edition':edition,'updated_at':now.isoformat(),
+                                                  'candidate_sha256':identity,'preview':preview})+'\n')
+    validate(dist,allow_preview=preview)
     previous=SITE/'.previous-dist'
     if previous.exists():shutil.rmtree(previous)
     if (SITE/'dist').exists():(SITE/'dist').rename(previous)
@@ -231,8 +316,8 @@ def build(preview=False):
     print(json.dumps({'site_files':len([p for p in dist.rglob('*') if p.is_file()]),'edition':edition,'source_candidate':identity}))
 
 
-def validate(dist):
-    validate_dist(dist)
+def validate(dist,allow_preview=False):
+    validate_dist(dist,allow_preview=allow_preview)
 
 
 if __name__=='__main__':build(preview='--preview' in sys.argv)
