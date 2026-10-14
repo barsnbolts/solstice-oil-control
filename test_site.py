@@ -18,6 +18,10 @@ assert result['installation_path_context_checks']==30
 assert result['alternative_exit_paths']==8
 assert result['alternative_exit_path_checks']==24
 assert result['gravity_gate_cases']==91
+index=(dist/'index.html').read_text()
+assert 'same-part-number Vue' not in index
+assert 'engine and pan part number are unspecified' in index
+assert 'LY7/12666374 V6 analog' in index
 catalog=json.loads((dist/'catalog.json').read_text())
 for concept in catalog['concepts'].values():
     metrics=concept['comparison']
