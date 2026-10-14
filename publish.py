@@ -25,6 +25,9 @@ def verify_reviewed_edition():
     if (approval.get('site_edition')!=version.get('edition') or
             version.get('candidate_sha256')!=candidate_sha):
         raise ValueError('The static site is not the exact edition accepted with this candidate')
+    page=(SITE/'dist/index.html').read_text()
+    if 'LOCAL PREVIEW / REVIEW PENDING' in page or 'DIGITAL REVIEW COMPLETE' not in page:
+        raise ValueError('The reviewed bundle does not carry its production status')
     validate_dist(SITE/'dist')
     return version['edition']
 
